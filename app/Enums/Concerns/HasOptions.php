@@ -13,9 +13,16 @@ trait HasOptions
      */
     public static function options(): array
     {
-        return array_map(
-            fn (self $case): array => ['value' => $case->value, 'label' => $case->label()],
-            self::cases(),
-        );
+        return array_map(fn (self $case): array => $case->toOption(), self::cases());
+    }
+
+    /**
+     * Get the case as a value/label pair.
+     *
+     * @return array{value: string, label: string}
+     */
+    public function toOption(): array
+    {
+        return ['value' => $this->value, 'label' => $this->label()];
     }
 }

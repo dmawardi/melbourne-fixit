@@ -2,11 +2,13 @@
 
 namespace App\Models;
 
+use App\Enums\ActivityEvent;
 use App\Enums\BudgetRange;
 use App\Enums\JobCategory;
 use App\Enums\JobRequestStatus;
 use App\Enums\JobUrgency;
 use App\Enums\PropertyType;
+use App\Models\Concerns\TracksChanges;
 use Carbon\CarbonImmutable;
 use Database\Factories\JobRequestFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
@@ -20,6 +22,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 /**
@@ -40,6 +43,8 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @property BudgetRange|null $budget_range
  * @property PropertyType|null $property_type
  * @property JobRequestStatus $status
+ * @property string|null $admin_notes
+ * @property CarbonImmutable|null $last_activity_at
  * @property string|null $submitted_ip
  * @property string|null $submitted_user_agent
  * @property CarbonImmutable|null $created_at
@@ -59,16 +64,18 @@ use Illuminate\Database\Eloquent\SoftDeletes;
     'urgency',
     'budget_range',
     'property_type',
+    'status',
+    'admin_notes',
 ])]
-#[Hidden(['id', 'user_id', 'submitted_ip', 'submitted_user_agent'])]
+#[Hidden(['id', 'user_id', 'admin_notes', 'submitted_ip', 'submitted_user_agent'])]
 #[RouteKey('public_id')]
 class JobRequest extends Model
 {
     /** @use HasFactory<JobRequestFactory> */
-    use HasFactory, HasUlids, SoftDeletes;
+    use HasFactory, HasUlids, SoftDeletes, TracksChanges;
 
     /**
-     * The maximum number of photos a single request may have.
+     * The maximum number of photos a customer may add to a single request.
      */
     public const MAX_PHOTOS = 10;
 
@@ -91,6 +98,7 @@ class JobRequest extends Model
     {
         return [
             'claimed_at' => 'datetime',
+            'last_activity_at' => 'datetime',
             'category' => JobCategory::class,
             'urgency' => JobUrgency::class,
             'budget_range' => BudgetRange::class,
@@ -104,9 +112,9 @@ class JobRequest extends Model
      */
     protected static function booted(): void
     {
-        // Photo files aren't removed by the database cascade, so clean them up explicitly.
+        // Stored files aren't removed by the database cascade, so clean them up explicitly.
         static::forceDeleting(function (JobRequest $jobRequest): void {
-            $jobRequest->photos()->get()->each->delete();
+            $jobRequest->files()->get()->each->delete();
         });
     }
 
@@ -133,13 +141,43 @@ class JobRequest extends Model
     }
 
     /**
-     * Get the photos attached to the request.
+     * Get the files attached to the request, including admin-only files.
      *
-     * @return HasMany<JobRequestPhoto, $this>
+     * @return HasMany<JobRequestFile, $this>
      */
-    public function photos(): HasMany
+    public function files(): HasMany
     {
-        return $this->hasMany(JobRequestPhoto::class)->orderBy('sort_order')->orderBy('id');
+        return $this->hasMany(JobRequestFile::class)->orderBy('sort_order')->orderBy('id');
+    }
+
+    /**
+     * Get the messages posted on the request, including admin-only messages.
+     *
+     * @return HasMany<JobRequestMessage, $this>
+     */
+    public function messages(): HasMany
+    {
+        return $this->hasMany(JobRequestMessage::class)->latest()->latest('id');
+    }
+
+    /**
+     * Get the activity log for the request, newest first.
+     *
+     * @return HasMany<JobRequestActivity, $this>
+     */
+    public function activities(): HasMany
+    {
+        return $this->hasMany(JobRequestActivity::class)->latest()->latest('id');
+    }
+
+    /**
+     * Get the most recent activity on the request.
+     *
+     * @return HasOne<JobRequestActivity, $this>
+     */
+    public function latestActivity(): HasOne
+    {
+        return $this->hasOne(JobRequestActivity::class)->latestOfMany();
     }
 
     /**
@@ -162,13 +200,79 @@ class JobRequest extends Model
             'user_id' => $user->id,
             'claimed_at' => now(),
         ])->save();
+
+        $this->recordActivity(ActivityEvent::Claimed, by: $user);
     }
 
     /**
-     * Get the number of photos that can still be added to the request.
+     * Get the number of photos the customer can still add to the request.
+     *
+     * Files uploaded by admins don't count towards the customer's limit.
      */
     public function remainingPhotoSlots(): int
     {
-        return max(0, self::MAX_PHOTOS - $this->photos()->count());
+        $customerUploads = $this->user_id === null
+            ? 0
+            : $this->files()->where('uploaded_by', $this->user_id)->count();
+
+        return max(0, self::MAX_PHOTOS - $customerUploads);
+    }
+
+    /**
+     * Add an entry to the request's activity log and mark the request as recently active.
+     *
+     * @param  array<string, mixed>  $properties
+     */
+    public function recordActivity(ActivityEvent $event, array $properties = [], ?User $by = null): JobRequestActivity
+    {
+        $by ??= auth()->user();
+
+        $activity = new JobRequestActivity([
+            'event' => $event,
+            'properties' => $properties ?: null,
+        ]);
+        $activity->user_id = $by instanceof User ? $by->id : null;
+        $this->activities()->save($activity);
+
+        // Update directly so this doesn't touch updated_at or fire model events. Includes
+        // trashed rows so deletions are recorded too.
+        $this->last_activity_at = $activity->created_at;
+        $this->newQueryWithoutScopes()->whereKey($this->getKey())->update(['last_activity_at' => $this->last_activity_at]);
+        $this->syncOriginalAttribute('last_activity_at');
+
+        return $activity;
+    }
+
+    /**
+     * Update the request and record what changed in the activity log.
+     *
+     * Status and admin notes get their own log entries; everything else is grouped into one.
+     *
+     * @param  array<string, mixed>  $attributes  Validated attributes.
+     */
+    public function updateWithActivity(array $attributes, ?User $by = null): void
+    {
+        $this->fill($attributes);
+        $changes = $this->pendingChanges();
+
+        if ($changes === []) {
+            return;
+        }
+
+        $this->save();
+
+        if (isset($changes['status'])) {
+            $this->recordActivity(ActivityEvent::StatusChanged, $changes['status'], $by);
+        }
+
+        if (isset($changes['admin_notes'])) {
+            $this->recordActivity(ActivityEvent::NotesUpdated, $changes['admin_notes'], $by);
+        }
+
+        $otherChanges = array_diff_key($changes, array_flip(['status', 'admin_notes']));
+
+        if ($otherChanges !== []) {
+            $this->recordActivity(ActivityEvent::Updated, ['changes' => $otherChanges], $by);
+        }
     }
 }

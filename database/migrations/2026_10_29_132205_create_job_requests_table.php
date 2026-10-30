@@ -40,6 +40,11 @@ return new class extends Migration
 
             $table->string('status')->default('submitted');
 
+            // Admin-only.
+            $table->text('admin_notes')->nullable();
+            // Bumped whenever activity is recorded, so admins can see what changed recently.
+            $table->timestamp('last_activity_at')->nullable();
+
             // Abuse tracking for the public form.
             $table->string('submitted_ip', 45)->nullable();
             $table->text('submitted_user_agent')->nullable();
@@ -49,6 +54,7 @@ return new class extends Migration
 
             $table->index(['contact_email', 'user_id']);
             $table->index('status');
+            $table->index('last_activity_at');
         });
     }
 

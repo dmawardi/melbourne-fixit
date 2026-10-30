@@ -11,10 +11,14 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('job_request_photos', function (Blueprint $table) {
+        Schema::create('job_request_files', function (Blueprint $table) {
             $table->id();
             $table->foreignId('job_request_id')->constrained()->cascadeOnDelete();
             $table->foreignId('uploaded_by')->nullable()->constrained('users')->nullOnDelete();
+
+            $table->string('kind')->default('photo');
+            // Files are hidden from the customer unless explicitly shared.
+            $table->string('visibility')->default('internal');
 
             $table->string('disk')->default('s3');
             $table->string('path')->unique();
@@ -32,6 +36,7 @@ return new class extends Migration
             $table->timestamps();
 
             $table->index(['job_request_id', 'sort_order']);
+            $table->index(['job_request_id', 'visibility']);
         });
     }
 
@@ -40,6 +45,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('job_request_photos');
+        Schema::dropIfExists('job_request_files');
     }
 };

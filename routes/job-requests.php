@@ -1,7 +1,7 @@
 <?php
 
 use App\Http\Controllers\JobRequests\JobRequestController;
-use App\Http\Controllers\JobRequests\JobRequestPhotoController;
+use App\Http\Controllers\JobRequests\JobRequestFileController;
 use Illuminate\Support\Facades\Route;
 
 // Public quote request form.
@@ -18,12 +18,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::delete('requests/{jobRequest}', [JobRequestController::class, 'destroy'])->name('job-requests.destroy');
 
     Route::scopeBindings()->group(function () {
-        Route::post('requests/{jobRequest}/photos', [JobRequestPhotoController::class, 'store'])
+        Route::post('requests/{jobRequest}/photos', [JobRequestFileController::class, 'store'])
             ->middleware('throttle:job-request-photos')
             ->name('job-requests.photos.store');
-        Route::patch('requests/{jobRequest}/photos/{photo}', [JobRequestPhotoController::class, 'update'])
+        Route::patch('requests/{jobRequest}/photos/{file}', [JobRequestFileController::class, 'update'])
             ->name('job-requests.photos.update');
-        Route::delete('requests/{jobRequest}/photos/{photo}', [JobRequestPhotoController::class, 'destroy'])
+        Route::delete('requests/{jobRequest}/photos/{file}', [JobRequestFileController::class, 'destroy'])
             ->name('job-requests.photos.destroy');
     });
 });

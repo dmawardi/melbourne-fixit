@@ -18,12 +18,13 @@ class ClaimJobRequests
             return 0;
         }
 
-        return JobRequest::query()
+        $jobRequests = JobRequest::query()
             ->unclaimed()
             ->where('contact_email', mb_strtolower($user->email))
-            ->update([
-                'user_id' => $user->id,
-                'claimed_at' => now(),
-            ]);
+            ->get();
+
+        $jobRequests->each->assignTo($user);
+
+        return $jobRequests->count();
     }
 }

@@ -3,10 +3,8 @@
 namespace App\Http\Controllers\JobRequests;
 
 use App\Actions\JobRequests\ClaimJobRequests;
-use App\Enums\BudgetRange;
-use App\Enums\JobCategory;
-use App\Enums\JobUrgency;
-use App\Enums\PropertyType;
+use App\Enums\ActivityEvent;
+use App\Http\Controllers\Concerns\ProvidesJobRequestOptions;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\JobRequests\StoreJobRequestRequest;
 use App\Http\Requests\JobRequests\UpdateJobRequestRequest;
@@ -21,13 +19,15 @@ use Inertia\Response;
 
 class JobRequestController extends Controller
 {
+    use ProvidesJobRequestOptions;
+
     /**
      * Show the public job request form.
      */
     public function create(Request $request): Response
     {
         return Inertia::render('job-requests/create', [
-            'options' => $this->formOptions(),
+            'options' => $this->jobRequestOptions(),
             'defaults' => [
                 'contact_name' => $request->user()?->name,
                 'contact_email' => $request->user()?->email,
@@ -51,6 +51,7 @@ class JobRequestController extends Controller
             $jobRequest->user_id = $user->id;
             $jobRequest->claimed_at = now();
             $jobRequest->save();
+            $jobRequest->recordActivity(ActivityEvent::Created, by: $user);
 
             Inertia::flash('toast', ['type' => 'success', 'message' => __('Request submitted. You can now add photos.')]);
 
@@ -58,6 +59,7 @@ class JobRequestController extends Controller
         }
 
         $jobRequest->save();
+        $jobRequest->recordActivity(ActivityEvent::Created);
 
         return to_route('job-requests.submitted')->with('submittedEmail', $jobRequest->contact_email);
     }
@@ -88,7 +90,7 @@ class JobRequestController extends Controller
 
         $jobRequests = $request->user()
             ->jobRequests()
-            ->withCount('photos')
+            ->withCount(['files' => fn ($query) => $query->shared()])
             ->latest()
             ->paginate(10);
 
@@ -104,11 +106,15 @@ class JobRequestController extends Controller
     {
         Gate::authorize('view', $jobRequest);
 
-        $jobRequest->load('photos');
+        // Only load what the customer is allowed to see.
+        $jobRequest->load([
+            'files' => fn ($query) => $query->shared(),
+            'messages' => fn ($query) => $query->shared(),
+        ]);
 
         return Inertia::render('job-requests/show', [
             'jobRequest' => (new JobRequestResource($jobRequest))->resolve($request),
-            'options' => $this->formOptions(),
+            'options' => $this->jobRequestOptions(),
             'maxPhotos' => JobRequest::MAX_PHOTOS,
         ]);
     }
@@ -118,7 +124,7 @@ class JobRequestController extends Controller
      */
     public function update(UpdateJobRequestRequest $request, JobRequest $jobRequest): RedirectResponse
     {
-        $jobRequest->update($request->validated());
+        $jobRequest->updateWithActivity($request->validated(), $request->user());
 
         Inertia::flash('toast', ['type' => 'success', 'message' => __('Request updated.')]);
 
@@ -128,29 +134,15 @@ class JobRequestController extends Controller
     /**
      * Delete a job request.
      */
-    public function destroy(JobRequest $jobRequest): RedirectResponse
+    public function destroy(Request $request, JobRequest $jobRequest): RedirectResponse
     {
         Gate::authorize('delete', $jobRequest);
 
         $jobRequest->delete();
+        $jobRequest->recordActivity(ActivityEvent::Deleted, by: $request->user());
 
         Inertia::flash('toast', ['type' => 'success', 'message' => __('Request deleted.')]);
 
         return to_route('job-requests.index');
-    }
-
-    /**
-     * Get the select options for the job request form.
-     *
-     * @return array<string, list<array{value: string, label: string}>>
-     */
-    private function formOptions(): array
-    {
-        return [
-            'categories' => JobCategory::options(),
-            'urgencies' => JobUrgency::options(),
-            'budgetRanges' => BudgetRange::options(),
-            'propertyTypes' => PropertyType::options(),
-        ];
     }
 }
