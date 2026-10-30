@@ -10,6 +10,7 @@ use App\Models\JobRequest;
 use App\Models\JobRequestFile;
 use App\Models\JobRequestMessage;
 use App\Models\User;
+use App\Models\Vendor;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Database\Seeder;
@@ -66,6 +67,10 @@ class JobRequestSeeder extends Seeder
             ?? User::factory()->create(['name' => 'Test User', 'email' => 'test@example.com']);
         $admin = User::firstWhere('email', 'admin@example.com')
             ?? User::factory()->admin()->create(['name' => 'Admin User', 'email' => 'admin@example.com']);
+
+        if (Vendor::query()->doesntExist()) {
+            $this->call(VendorSeeder::class);
+        }
 
         // Captured once, since the clock is moved around while seeding.
         $now = now();
@@ -155,6 +160,9 @@ class JobRequestSeeder extends Seeder
 
     protected function quoted(JobRequest $jobRequest, User $admin): void
     {
+        $vendor = Vendor::all()->filter(fn (Vendor $vendor): bool => $vendor->canHandle($jobRequest->category))->random();
+        $jobRequest->assignVendor($vendor, $admin);
+
         $this->storeDocument($jobRequest, $admin, FileKind::ClientQuote, Visibility::Customer);
         $jobRequest->updateWithActivity(['status' => JobRequestStatus::Quoted], $admin);
         $this->postMessage($jobRequest, $admin, "Your quote is ready. Let us know if you'd like to go ahead.", Visibility::Customer);

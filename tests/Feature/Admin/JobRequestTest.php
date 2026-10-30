@@ -35,6 +35,7 @@ class JobRequestTest extends TestCase
             ->get(route('admin.job-requests.index'))
             ->assertOk()
             ->assertInertia(fn ($page) => $page
+                ->component('admin/job-requests/index')
                 ->has('jobRequests.data', 3)
                 ->where('jobRequests.data.0.id', $newest->public_id)
                 ->where('jobRequests.data.1.id', $middle->public_id)
@@ -92,6 +93,7 @@ class JobRequestTest extends TestCase
             ->get(route('admin.job-requests.show', $jobRequest))
             ->assertOk()
             ->assertInertia(fn ($page) => $page
+                ->component('admin/job-requests/show')
                 ->where('jobRequest.admin_notes', 'Gate code 4821')
                 ->has('jobRequest.files', 2)
                 ->has('jobRequest.files.0.visibility')

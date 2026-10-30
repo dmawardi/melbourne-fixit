@@ -12,6 +12,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\UpdateJobRequestRequest;
 use App\Http\Resources\Admin\JobRequestResource;
 use App\Models\JobRequest;
+use App\Models\Vendor;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -40,7 +41,7 @@ class JobRequestController extends Controller
         ];
 
         $jobRequests = JobRequest::query()
-            ->with(['user', 'latestActivity.user'])
+            ->with(['user', 'vendor', 'latestActivity.user'])
             ->withCount(['files', 'messages'])
             ->when($filters['search'], function (Builder $query, string $search): void {
                 $query->where(function (Builder $query) use ($search): void {
@@ -79,6 +80,7 @@ class JobRequestController extends Controller
     {
         $jobRequest->load([
             'user',
+            'vendor',
             'files.uploader',
             'messages.author',
             'activities' => fn ($query) => $query->with('user')->limit(self::ACTIVITY_LIMIT),
@@ -86,6 +88,11 @@ class JobRequestController extends Controller
 
         return Inertia::render('admin/job-requests/show', [
             'jobRequest' => (new JobRequestResource($jobRequest))->resolve($request),
+            'vendors' => Vendor::query()->orderBy('name')->get()->map(fn (Vendor $vendor): array => [
+                'id' => $vendor->id,
+                'name' => $vendor->name,
+                'handles_category' => $vendor->canHandle($jobRequest->category),
+            ]),
             'options' => [
                 ...$this->jobRequestOptions(),
                 'statuses' => JobRequestStatus::options(),

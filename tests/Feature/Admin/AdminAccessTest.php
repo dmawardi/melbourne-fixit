@@ -6,6 +6,7 @@ use App\Models\JobRequest;
 use App\Models\JobRequestFile;
 use App\Models\JobRequestMessage;
 use App\Models\User;
+use App\Models\Vendor;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\TestCase;
@@ -29,6 +30,14 @@ class AdminAccessTest extends TestCase
             'files.destroy' => ['delete', 'admin.job-requests.files.destroy'],
             'messages.store' => ['post', 'admin.job-requests.messages.store'],
             'messages.destroy' => ['delete', 'admin.job-requests.messages.destroy'],
+            'vendor.update' => ['put', 'admin.job-requests.vendor.update'],
+            'vendor.destroy' => ['delete', 'admin.job-requests.vendor.destroy'],
+            'vendors.index' => ['get', 'admin.vendors.index'],
+            'vendors.create' => ['get', 'admin.vendors.create'],
+            'vendors.store' => ['post', 'admin.vendors.store'],
+            'vendors.edit' => ['get', 'admin.vendors.edit'],
+            'vendors.update' => ['put', 'admin.vendors.update'],
+            'vendors.destroy' => ['delete', 'admin.vendors.destroy'],
         ];
     }
 
@@ -42,6 +51,8 @@ class AdminAccessTest extends TestCase
             str_contains($route, 'files.store'), str_contains($route, 'messages.store') => [$jobRequest],
             str_contains($route, 'files.') => [$jobRequest, $file],
             str_contains($route, 'messages.') => [$jobRequest, $message],
+            in_array($route, ['admin.vendors.index', 'admin.vendors.create', 'admin.vendors.store'], true) => [],
+            str_contains($route, 'admin.vendors.') => [Vendor::factory()->create()],
             $route === 'admin.job-requests.index' => [],
             default => [$jobRequest],
         });

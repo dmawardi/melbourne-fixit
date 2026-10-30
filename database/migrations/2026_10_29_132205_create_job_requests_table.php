@@ -41,6 +41,7 @@ return new class extends Migration
             $table->string('status')->default('submitted');
 
             // Admin-only.
+            $table->foreignId('vendor_id')->nullable()->constrained()->nullOnDelete();
             $table->text('admin_notes')->nullable();
             // Bumped whenever activity is recorded, so admins can see what changed recently.
             $table->timestamp('last_activity_at')->nullable();

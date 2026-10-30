@@ -82,6 +82,7 @@ Every change is logged with who made it and when:
 - status changes and notes changes
 - file uploads, edits and deletions
 - updates posted and deleted
+- vendors assigned and removed
 - request deletions
 
 Logging a change also updates the request's `last_activity_at`, which is how the admin list shows the most recently updated requests first.
@@ -199,8 +200,14 @@ If `curl` shows no `<h1>`, the SSR server isn't running or can't be reached. Che
 | `DELETE /admin/requests/{id}`                        | Soft delete                                                                                                                                                       |
 | `POST`, `PATCH`, `DELETE /admin/requests/{id}/files` | Upload, edit and delete files                                                                                                                                     |
 | `POST`, `DELETE /admin/requests/{id}/messages`       | Post and delete updates                                                                                                                                           |
+| `PUT`, `DELETE /admin/requests/{id}/vendor`          | Assign and remove the request's vendor                                                                                                                            |
+| `/admin/vendors`                                     | List, add, edit and archive vendors                                                                                                                               |
 
-The React pages for the admin area haven't been built yet.
+### Vendors
+
+Each request can have one vendor. General vendors take any job, and specialists have a list of the job types they cover. A specialist can still be assigned outside that list: the admin page shows a warning, and the log entry records it.
+
+Archiving a vendor keeps it on the requests it's already assigned to, but it can't be assigned to any more. Customers never see vendors.
 
 ## File storage
 

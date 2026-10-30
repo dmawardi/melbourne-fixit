@@ -9,6 +9,7 @@ use App\Models\JobRequest;
 use App\Models\JobRequestFile;
 use App\Models\JobRequestMessage;
 use App\Models\User;
+use App\Models\Vendor;
 use Illuminate\Auth\Events\Verified;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -252,6 +253,27 @@ class JobRequestTest extends TestCase
         );
         $response->assertDontSee('Secret note');
         $response->assertDontSee('Vendor charges');
+    }
+
+    public function test_customers_cannot_see_or_set_the_vendor()
+    {
+        $user = User::factory()->create();
+        $vendor = Vendor::factory()->create(['name' => 'Secret Vendor Pty Ltd']);
+        $otherVendor = Vendor::factory()->create();
+        $jobRequest = JobRequest::factory()->claimedBy($user)->create();
+        $jobRequest->assignVendor($vendor);
+
+        $response = $this->actingAs($user)->get(route('job-requests.show', $jobRequest));
+
+        $response->assertInertia(fn ($page) => $page
+            ->missing('jobRequest.vendor')
+            ->missing('jobRequest.vendor_id')
+        );
+        $response->assertDontSee('Secret Vendor Pty Ltd');
+
+        $this->actingAs($user)->patch(route('job-requests.update', $jobRequest), ['vendor_id' => $otherVendor->id]);
+
+        $this->assertSame($vendor->id, $jobRequest->fresh()->vendor_id);
     }
 
     public function test_requests_cannot_be_updated_once_quoted()

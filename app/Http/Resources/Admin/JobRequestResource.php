@@ -28,6 +28,10 @@ class JobRequestResource extends CustomerJobRequestResource
                 'name' => $this->user->name,
                 'email' => $this->user->email,
             ] : null),
+            'vendor' => $this->whenLoaded('vendor', fn () => $this->vendor ? [
+                ...(new VendorResource($this->vendor))->resolve($request),
+                'handles_category' => $this->vendor->canHandle($this->category),
+            ] : null),
             'claimed_at' => $this->claimed_at?->toIso8601String(),
             'submitted_ip' => $this->submitted_ip,
             'messages_count' => $this->whenCounted('messages'),

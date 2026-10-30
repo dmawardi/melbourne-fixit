@@ -43,6 +43,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @property BudgetRange|null $budget_range
  * @property PropertyType|null $property_type
  * @property JobRequestStatus $status
+ * @property int|null $vendor_id
  * @property string|null $admin_notes
  * @property CarbonImmutable|null $last_activity_at
  * @property string|null $submitted_ip
@@ -67,7 +68,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
     'status',
     'admin_notes',
 ])]
-#[Hidden(['id', 'user_id', 'admin_notes', 'submitted_ip', 'submitted_user_agent'])]
+#[Hidden(['id', 'user_id', 'vendor_id', 'admin_notes', 'submitted_ip', 'submitted_user_agent'])]
 #[RouteKey('public_id')]
 class JobRequest extends Model
 {
@@ -141,6 +142,16 @@ class JobRequest extends Model
     }
 
     /**
+     * Get the vendor assigned to the request, even if the vendor has since been archived.
+     *
+     * @return BelongsTo<Vendor, $this>
+     */
+    public function vendor(): BelongsTo
+    {
+        return $this->belongsTo(Vendor::class)->withTrashed();
+    }
+
+    /**
      * Get the files attached to the request, including admin-only files.
      *
      * @return HasMany<JobRequestFile, $this>
@@ -202,6 +213,41 @@ class JobRequest extends Model
         ])->save();
 
         $this->recordActivity(ActivityEvent::Claimed, by: $user);
+    }
+
+    /**
+     * Assign a vendor to the request, replacing any vendor already assigned.
+     */
+    public function assignVendor(Vendor $vendor, ?User $by = null): void
+    {
+        if ($this->vendor_id === $vendor->id) {
+            return;
+        }
+
+        $this->removeVendor($by);
+
+        $this->vendor()->associate($vendor)->save();
+
+        $this->recordActivity(ActivityEvent::VendorAssigned, [
+            ...$vendor->activityProperties(),
+            'outside_categories' => ! $vendor->canHandle($this->category),
+        ], $by);
+    }
+
+    /**
+     * Remove the vendor assigned to the request, if there is one.
+     */
+    public function removeVendor(?User $by = null): void
+    {
+        $vendor = $this->vendor;
+
+        if ($vendor === null) {
+            return;
+        }
+
+        $this->vendor()->dissociate()->save();
+
+        $this->recordActivity(ActivityEvent::VendorUnassigned, $vendor->activityProperties(), $by);
     }
 
     /**

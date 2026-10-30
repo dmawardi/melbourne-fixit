@@ -2,6 +2,7 @@ import { Head, Link } from '@inertiajs/react';
 import { ChevronRight, ClipboardList, Image, MapPin, Plus } from 'lucide-react';
 import Heading from '@/components/heading';
 import StatusBadge from '@/components/job-requests/status-badge';
+import Pagination from '@/components/pagination';
 import { Button } from '@/components/ui/button';
 import { formatDate } from '@/lib/format';
 import { create, index, show } from '@/routes/job-requests';
@@ -108,46 +109,7 @@ export default function Index({
                     </ul>
                 )}
 
-                {meta.last_page > 1 && (
-                    <nav
-                        aria-label="Pagination"
-                        className="flex items-center justify-between text-sm"
-                    >
-                        <p className="text-muted-foreground">
-                            Page {meta.current_page} of {meta.last_page}
-                        </p>
-                        <div className="flex gap-2">
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                disabled={!links.prev}
-                                asChild={!!links.prev}
-                            >
-                                {links.prev ? (
-                                    <Link href={links.prev} rel="prev">
-                                        Previous
-                                    </Link>
-                                ) : (
-                                    'Previous'
-                                )}
-                            </Button>
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                disabled={!links.next}
-                                asChild={!!links.next}
-                            >
-                                {links.next ? (
-                                    <Link href={links.next} rel="next">
-                                        Next
-                                    </Link>
-                                ) : (
-                                    'Next'
-                                )}
-                            </Button>
-                        </div>
-                    </nav>
-                )}
+                <Pagination links={links} meta={meta} />
             </div>
         </>
     );

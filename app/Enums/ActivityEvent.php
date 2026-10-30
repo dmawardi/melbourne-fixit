@@ -18,6 +18,8 @@ enum ActivityEvent: string
     case FileDeleted = 'file_deleted';
     case MessagePosted = 'message_posted';
     case MessageDeleted = 'message_deleted';
+    case VendorAssigned = 'vendor_assigned';
+    case VendorUnassigned = 'vendor_unassigned';
     case Deleted = 'deleted';
 
     public function label(): string
@@ -33,6 +35,8 @@ enum ActivityEvent: string
             self::FileDeleted => 'File deleted',
             self::MessagePosted => 'Update posted',
             self::MessageDeleted => 'Update deleted',
+            self::VendorAssigned => 'Vendor assigned',
+            self::VendorUnassigned => 'Vendor removed',
             self::Deleted => 'Request deleted',
         };
     }
