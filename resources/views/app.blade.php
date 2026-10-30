@@ -30,6 +30,10 @@
             }
         </style>
 
+        <meta name="theme-color" content="#ea580c">
+        <meta property="og:site_name" content="{{ config('app.name') }}">
+        <meta property="og:locale" content="en_AU">
+
         <link rel="icon" href="/favicon.ico" sizes="any">
         <link rel="icon" href="/favicon.svg" type="image/svg+xml">
         <link rel="apple-touch-icon" href="/apple-touch-icon.png">
@@ -40,6 +44,7 @@
         @vite(['resources/css/app.css', 'resources/js/app.tsx', "resources/js/pages/{$page['component']}.tsx"])
         <x-inertia::head>
             <title>{{ config('app.name', 'Laravel') }}</title>
+            <meta name="description" content="{{ config('business.description') }}" data-inertia="description">
         </x-inertia::head>
     </head>
     <body class="font-sans antialiased">

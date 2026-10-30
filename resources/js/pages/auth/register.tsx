@@ -1,4 +1,4 @@
-import { Form, Head } from '@inertiajs/react';
+import { Form, Head, usePage } from '@inertiajs/react';
 import InputError from '@/components/input-error';
 import PasswordInput from '@/components/password-input';
 import TextLink from '@/components/text-link';
@@ -14,6 +14,11 @@ type Props = {
 };
 
 export default function Register({ passwordRules }: Props) {
+    // Prefilled when arriving from the quote request confirmation page.
+    const email =
+        new URL(usePage().url, 'http://localhost').searchParams.get('email') ??
+        '';
+
     return (
         <>
             <Head title="Register" />
@@ -53,6 +58,7 @@ export default function Register({ passwordRules }: Props) {
                                     tabIndex={2}
                                     autoComplete="email"
                                     name="email"
+                                    defaultValue={email}
                                     placeholder="email@example.com"
                                 />
                                 <InputError message={errors.email} />

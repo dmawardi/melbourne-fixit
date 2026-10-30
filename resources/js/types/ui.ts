@@ -19,3 +19,10 @@ export type AuthLayoutProps = {
     title?: string;
     description?: string;
 };
+
+export type Site = {
+    description: string;
+    phone: string | null;
+    email: string | null;
+    abn: string | null;
+};

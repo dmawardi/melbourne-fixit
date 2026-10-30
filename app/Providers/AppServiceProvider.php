@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Support\Facades\URL;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Validation\Rules\Password;
 
@@ -69,6 +70,16 @@ class AppServiceProvider extends ServiceProvider
         DB::prohibitDestructiveCommands(
             app()->isProduction(),
         );
+
+        // Generate every URL (canonicals, sitemap, emails) from APP_URL rather than the
+        // request's Host header, so a spoofed host can't leak into cached pages or the sitemap.
+        if (app()->isProduction()) {
+            URL::forceRootUrl(config('app.url'));
+
+            if (str_starts_with((string) config('app.url'), 'https://')) {
+                URL::forceScheme('https');
+            }
+        }
 
         Password::defaults(fn (): ?Password => app()->isProduction()
             ? Password::min(12)

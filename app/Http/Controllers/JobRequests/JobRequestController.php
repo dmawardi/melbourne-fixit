@@ -4,6 +4,7 @@ namespace App\Http\Controllers\JobRequests;
 
 use App\Actions\JobRequests\ClaimJobRequests;
 use App\Enums\ActivityEvent;
+use App\Enums\JobCategory;
 use App\Http\Controllers\Concerns\ProvidesJobRequestOptions;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\JobRequests\StoreJobRequestRequest;
@@ -11,6 +12,7 @@ use App\Http\Requests\JobRequests\UpdateJobRequestRequest;
 use App\Http\Resources\JobRequestResource;
 use App\Models\JobRequest;
 use App\Models\User;
+use App\Support\StructuredData;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
@@ -31,6 +33,14 @@ class JobRequestController extends Controller
             'defaults' => [
                 'contact_name' => $request->user()?->name,
                 'contact_email' => $request->user()?->email,
+                // Preselected when arriving from a service link on the home page.
+                'category' => JobCategory::tryFrom($request->string('category')->toString())?->value,
+            ],
+            'structuredData' => [
+                StructuredData::breadcrumbs([
+                    route('home') => 'Home',
+                    route('job-requests.create') => 'Request a quote',
+                ]),
             ],
         ]);
     }
