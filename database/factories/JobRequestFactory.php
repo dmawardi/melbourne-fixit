@@ -94,6 +94,20 @@ class JobRequestFactory extends Factory
     }
 
     /**
+     * Indicate that the request is for the given kind of job, with a matching title and description.
+     */
+    public function forCategory(JobCategory $category): static
+    {
+        [$title, $description] = self::JOBS[$category->value];
+
+        return $this->state(fn (array $attributes) => [
+            'category' => $category,
+            'title' => $title,
+            'description' => $description,
+        ]);
+    }
+
+    /**
      * Indicate that the request has been claimed by the given user.
      */
     public function claimedBy(User $user): static

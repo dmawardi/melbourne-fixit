@@ -4,7 +4,9 @@ namespace Database\Seeders;
 
 use App\Enums\ActivityEvent;
 use App\Enums\FileKind;
+use App\Enums\JobCategory;
 use App\Enums\JobRequestStatus;
+use App\Enums\VendorType;
 use App\Enums\Visibility;
 use App\Models\JobRequest;
 use App\Models\JobRequestFile;
@@ -94,11 +96,24 @@ class JobRequestSeeder extends Seeder
             });
 
             // Guest requests from people who haven't created an account yet.
-            foreach (range(1, 8) as $i) {
+            foreach (range(1, 14) as $i) {
                 $this->at($now->subDays(fake()->numberBetween(0, 14))->subMinutes(fake()->numberBetween(0, 600)), function (): void {
                     JobRequest::factory()->create()->recordActivity(ActivityEvent::Created);
                 });
             }
+
+            // Other customers' requests, so the admin list shows more than one customer at each stage.
+            foreach ([
+                [JobRequestStatus::Reviewing, 4],
+                [JobRequestStatus::Quoted, 8],
+                [JobRequestStatus::Scheduled, 12],
+                [JobRequestStatus::Scheduled, 16],
+                [JobRequestStatus::Completed, 30],
+            ] as [$status, $daysAgo]) {
+                $this->seedCustomerRequest(User::factory()->create(), $admin, $status, $now->subDays($daysAgo));
+            }
+
+            $this->seedVendorScenarios($admin, $now);
         } finally {
             Date::setTestNow();
         }
@@ -144,6 +159,96 @@ class JobRequestSeeder extends Seeder
                 };
             });
         }
+    }
+
+    /**
+     * Seed requests showing each way a vendor can end up on, or come off, a job.
+     */
+    protected function seedVendorScenarios(User $admin, CarbonImmutable $now): void
+    {
+        // A specialist assigned outside their job types, so the warning shows.
+        $this->seedGuestRequest(JobCategory::Roofing, $now->subDays(5), function (JobRequest $jobRequest) use ($admin): void {
+            $jobRequest->updateWithActivity(['status' => JobRequestStatus::Reviewing], $admin);
+            $jobRequest->assignVendor($this->specialistFor(JobCategory::Plumbing), $admin);
+            $this->postMessage($jobRequest, $admin, 'Our usual roofer is booked out, so the plumber will take a look at the downpipe.', Visibility::Internal);
+        });
+
+        // A vendor replaced by another.
+        $this->seedGuestRequest(JobCategory::Painting, $now->subDays(9), function (JobRequest $jobRequest) use ($admin): void {
+            $jobRequest->updateWithActivity(['status' => JobRequestStatus::Reviewing], $admin);
+            $jobRequest->assignVendor($this->specialistFor(JobCategory::Painting), $admin);
+            $this->postMessage($jobRequest, $admin, "Painter can't start for six weeks, so moving this to another vendor.", Visibility::Internal);
+            $jobRequest->assignVendor($this->generalVendor(), $admin);
+        });
+
+        // A vendor that pulled out, leaving the job unassigned.
+        $this->seedGuestRequest(JobCategory::Fencing, $now->subDays(7), function (JobRequest $jobRequest) use ($admin): void {
+            $jobRequest->updateWithActivity(['status' => JobRequestStatus::Reviewing], $admin);
+            $jobRequest->assignVendor($this->specialistFor(JobCategory::Fencing), $admin);
+            $jobRequest->removeVendor($admin);
+            $this->postMessage($jobRequest, $admin, 'Vendor pulled out, so this needs a new vendor.', Visibility::Internal);
+        });
+
+        // A job whose category changed after the vendor was assigned, so it no longer matches.
+        $this->seedGuestRequest(JobCategory::Plumbing, $now->subDays(6), function (JobRequest $jobRequest) use ($admin): void {
+            $jobRequest->assignVendor($this->specialistFor(JobCategory::Plumbing), $admin);
+            $jobRequest->updateWithActivity(['status' => JobRequestStatus::Reviewing, 'category' => JobCategory::Tiling], $admin);
+        });
+
+        // A vendor archived while still on a job.
+        $this->seedGuestRequest(JobCategory::Electrical, $now->subDays(20), function (JobRequest $jobRequest) use ($admin): void {
+            $vendor = Vendor::factory()->specialist(JobCategory::Electrical)->create(['name' => 'Sparks & Sons Electrical']);
+            $jobRequest->assignVendor($vendor, $admin);
+            $jobRequest->updateWithActivity(['status' => JobRequestStatus::Completed], $admin);
+            $vendor->delete();
+        });
+
+        // A cancelled job, with its vendor taken off.
+        $this->seedGuestRequest(JobCategory::Landscaping, $now->subDays(11), function (JobRequest $jobRequest) use ($admin): void {
+            $jobRequest->assignVendor($this->specialistFor(JobCategory::Landscaping), $admin);
+            $jobRequest->removeVendor($admin);
+            $jobRequest->updateWithActivity(['status' => JobRequestStatus::Cancelled], $admin);
+            $this->postMessage($jobRequest, $admin, 'Customer decided not to go ahead.', Visibility::Internal);
+        });
+
+        // A booked job with no street address yet.
+        $this->seedGuestRequest(JobCategory::GeneralHandyman, $now->subDays(3), function (JobRequest $jobRequest) use ($admin): void {
+            $jobRequest->assignVendor($this->generalVendor(), $admin);
+            $jobRequest->updateWithActivity(['status' => JobRequestStatus::Scheduled], $admin);
+        });
+    }
+
+    /**
+     * Seed a guest request, then run the callback a day after it was submitted.
+     *
+     * @param  callable(JobRequest): void  $callback
+     */
+    protected function seedGuestRequest(JobCategory $category, CarbonImmutable $start, callable $callback): void
+    {
+        $jobRequest = $this->at($start, function () use ($category): JobRequest {
+            $jobRequest = JobRequest::factory()->forCategory($category)->create();
+            $jobRequest->recordActivity(ActivityEvent::Created);
+
+            return $jobRequest;
+        });
+
+        $this->at($start->addDay(), fn () => $callback($jobRequest));
+    }
+
+    /**
+     * Get a specialist that takes the given job type, adding one if there isn't one yet.
+     */
+    protected function specialistFor(JobCategory $category): Vendor
+    {
+        return Vendor::query()->where('type', VendorType::Specialist)->get()
+            ->first(fn (Vendor $vendor): bool => $vendor->canHandle($category))
+            ?? Vendor::factory()->specialist($category)->create();
+    }
+
+    protected function generalVendor(): Vendor
+    {
+        return Vendor::query()->where('type', VendorType::General)->first()
+            ?? Vendor::factory()->general()->create();
     }
 
     protected function reviewing(JobRequest $jobRequest, User $admin): void
