@@ -17,6 +17,19 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Job Request Photos Disk
+    |--------------------------------------------------------------------------
+    |
+    | The disk customer job request photos are stored on. Photos are kept
+    | private and served through short-lived signed URLs, so this should
+    | be "s3" in production and "local" in development.
+    |
+    */
+
+    'job_photos' => env('JOB_PHOTOS_DISK', 's3'),
+
+    /*
+    |--------------------------------------------------------------------------
     | Filesystem Disks
     |--------------------------------------------------------------------------
     |
