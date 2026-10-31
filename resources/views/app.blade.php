@@ -22,15 +22,15 @@
         {{-- Inline style to set the HTML background color based on our theme in app.css --}}
         <style>
             html {
-                background-color: oklch(1 0 0);
+                background-color: oklch(0.98 0.005 78.3);
             }
 
             html.dark {
-                background-color: oklch(0.145 0 0);
+                background-color: oklch(0.213 0.022 248.9);
             }
         </style>
 
-        <meta name="theme-color" content="#ea580c">
+        <meta name="theme-color" content="#17324d">
         <meta property="og:site_name" content="{{ config('app.name') }}">
         <meta property="og:locale" content="en_AU">
 

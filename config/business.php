@@ -15,7 +15,7 @@ return [
 
     'name' => env('APP_NAME', 'Melbourne Fixit'),
 
-    'description' => 'Home maintenance, repairs and renovations across Melbourne. Tell us about the job and we\'ll match it with a trusted local tradesperson and send you a quote.',
+    'description' => 'Home maintenance, repairs and renovations across Melbourne. Tell us about the job and we\'ll match it with a vetted, insured local tradesperson, licensed where the work requires it, and send you a quote.',
 
     'phone' => env('BUSINESS_PHONE'),
 

@@ -44,7 +44,7 @@ class SeoTest extends TestCase
 
     public function test_unset_business_details_are_left_out_of_structured_data(): void
     {
-        config(['business.phone' => null, 'business.email' => '']);
+        config(['business.phone' => null, 'business.email' => '', 'business.same_as' => []]);
 
         $this->get(route('home'))
             ->assertInertia(fn (Assert $page) => $page

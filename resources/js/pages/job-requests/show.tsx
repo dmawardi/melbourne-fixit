@@ -165,7 +165,7 @@ function Updates({ messages }: { messages: JobRequestMessage[] }) {
             {messages.map((message) => (
                 <li key={message.id} className="relative">
                     <span
-                        className="absolute top-1.5 -left-[21px] size-2.5 rounded-full bg-orange-600 ring-4 ring-background"
+                        className="absolute top-1.5 -left-[21px] size-2.5 rounded-full bg-cta ring-4 ring-background"
                         aria-hidden="true"
                     />
                     <time

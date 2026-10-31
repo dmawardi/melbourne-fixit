@@ -1,7 +1,15 @@
 import { Link, usePage } from '@inertiajs/react';
+import { Menu, Phone } from 'lucide-react';
 import type { ReactNode } from 'react';
 import AppLogo from '@/components/app-logo';
 import { Button } from '@/components/ui/button';
+import {
+    Sheet,
+    SheetClose,
+    SheetContent,
+    SheetTitle,
+    SheetTrigger,
+} from '@/components/ui/sheet';
 import { home, login, register } from '@/routes';
 import { create, index } from '@/routes/job-requests';
 
@@ -13,6 +21,9 @@ const sectionLinks = [
 
 export default function PublicLayout({ children }: { children: ReactNode }) {
     const { auth, name, site } = usePage().props;
+    const phoneHref = site.phone
+        ? `tel:${site.phone.replace(/[^\d+]/g, '')}`
+        : null;
 
     return (
         <div className="flex min-h-svh flex-col bg-background text-foreground">
@@ -23,11 +34,11 @@ export default function PublicLayout({ children }: { children: ReactNode }) {
                 Skip to content
             </a>
 
-            <header className="border-b">
+            <header className="border-b bg-card">
                 <div className="mx-auto flex h-16 max-w-6xl items-center gap-6 px-4 sm:px-6">
                     <Link
                         href={home()}
-                        className="flex items-center"
+                        className="flex min-w-0 items-center"
                         aria-label={`${name} home`}
                     >
                         <AppLogo />
@@ -48,17 +59,28 @@ export default function PublicLayout({ children }: { children: ReactNode }) {
                         ))}
                     </nav>
 
-                    <div className="ml-auto flex items-center gap-2">
-                        {auth.user ? (
-                            <Button variant="ghost" asChild>
-                                <Link href={index()}>My requests</Link>
-                            </Button>
-                        ) : (
-                            <Button variant="ghost" asChild>
-                                <Link href={login()}>Log in</Link>
-                            </Button>
+                    <div className="ml-auto flex shrink-0 items-center gap-2">
+                        {phoneHref && (
+                            <a
+                                href={phoneHref}
+                                className="mr-2 hidden items-center gap-1.5 text-sm font-medium lg:inline-flex"
+                            >
+                                <Phone className="size-4" aria-hidden="true" />
+                                {site.phone}
+                            </a>
                         )}
-                        <Button asChild>
+                        <Button
+                            variant="ghost"
+                            className="hidden sm:inline-flex"
+                            asChild
+                        >
+                            {auth.user ? (
+                                <Link href={index()}>My requests</Link>
+                            ) : (
+                                <Link href={login()}>Log in</Link>
+                            )}
+                        </Button>
+                        <Button variant="cta" asChild>
                             <Link href={create()}>
                                 <span className="sm:hidden">Get a quote</span>
                                 <span className="hidden sm:inline">
@@ -66,6 +88,66 @@ export default function PublicLayout({ children }: { children: ReactNode }) {
                                 </span>
                             </Link>
                         </Button>
+
+                        <Sheet>
+                            <SheetTrigger asChild>
+                                <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="md:hidden"
+                                    aria-label="Open menu"
+                                >
+                                    <Menu aria-hidden="true" />
+                                </Button>
+                            </SheetTrigger>
+                            <SheetContent side="right" className="p-6">
+                                <SheetTitle>Menu</SheetTitle>
+                                <nav
+                                    aria-label="Mobile"
+                                    className="flex flex-col gap-1"
+                                >
+                                    {sectionLinks.map((link) => (
+                                        <SheetClose key={link.href} asChild>
+                                            <a
+                                                href={link.href}
+                                                className="rounded-md py-2 font-medium"
+                                            >
+                                                {link.label}
+                                            </a>
+                                        </SheetClose>
+                                    ))}
+                                    <SheetClose asChild>
+                                        {auth.user ? (
+                                            <Link
+                                                href={index()}
+                                                className="rounded-md py-2 font-medium"
+                                            >
+                                                My requests
+                                            </Link>
+                                        ) : (
+                                            <Link
+                                                href={login()}
+                                                className="rounded-md py-2 font-medium"
+                                            >
+                                                Log in
+                                            </Link>
+                                        )}
+                                    </SheetClose>
+                                    {phoneHref && (
+                                        <a
+                                            href={phoneHref}
+                                            className="mt-2 inline-flex items-center gap-2 border-t py-4 font-medium"
+                                        >
+                                            <Phone
+                                                className="size-4"
+                                                aria-hidden="true"
+                                            />
+                                            {site.phone}
+                                        </a>
+                                    )}
+                                </nav>
+                            </SheetContent>
+                        </Sheet>
                     </div>
                 </div>
             </header>
@@ -77,7 +159,9 @@ export default function PublicLayout({ children }: { children: ReactNode }) {
             <footer className="border-t bg-muted/40">
                 <div className="mx-auto grid max-w-6xl gap-8 px-4 py-10 text-sm sm:px-6 md:grid-cols-3">
                     <div className="space-y-3">
-                        <AppLogo />
+                        <div className="flex items-center">
+                            <AppLogo />
+                        </div>
                         <p className="text-muted-foreground">
                             {site.description}
                         </p>
@@ -130,10 +214,10 @@ export default function PublicLayout({ children }: { children: ReactNode }) {
                         <h2 className="font-medium">Contact</h2>
                         <ul className="space-y-2 text-muted-foreground">
                             <li>Serving metropolitan Melbourne, Victoria</li>
-                            {site.phone && (
+                            {phoneHref && (
                                 <li>
                                     <a
-                                        href={`tel:${site.phone.replace(/[^\d+]/g, '')}`}
+                                        href={phoneHref}
                                         className="hover:text-foreground"
                                     >
                                         {site.phone}

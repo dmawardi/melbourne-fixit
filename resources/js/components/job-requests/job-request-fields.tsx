@@ -36,8 +36,8 @@ export default function JobRequestFields({
     mode,
 }: Props) {
     return (
-        <div className="space-y-10">
-            <Fieldset legend="About the job">
+        <div className={mode === 'create' ? 'space-y-6' : 'space-y-10'}>
+            <Fieldset legend="About the job" card={mode === 'create'}>
                 <Field
                     id="category"
                     label="Type of job"
@@ -146,7 +146,7 @@ export default function JobRequestFields({
                 </div>
             </Fieldset>
 
-            <Fieldset legend="Location">
+            <Fieldset legend="Location" card={mode === 'create'}>
                 {mode === 'edit' && (
                     <Field
                         id="address_line"
@@ -201,7 +201,7 @@ export default function JobRequestFields({
                 </div>
             </Fieldset>
 
-            <Fieldset legend="Your contact details">
+            <Fieldset legend="Your contact details" card={mode === 'create'}>
                 <Field
                     id="contact_name"
                     label="Name"
@@ -264,16 +264,24 @@ export default function JobRequestFields({
 
 function Fieldset({
     legend,
+    card = false,
     children,
 }: {
     legend: string;
+    card?: boolean;
     children: ReactNode;
 }) {
     return (
-        <fieldset className="space-y-6">
-            <legend className="mb-4 text-lg font-medium">{legend}</legend>
-            {children}
-        </fieldset>
+        <div
+            className={
+                card ? 'rounded-xl border bg-card p-5 sm:p-6' : undefined
+            }
+        >
+            <fieldset className="space-y-6">
+                <legend className="mb-4 text-lg font-medium">{legend}</legend>
+                {children}
+            </fieldset>
+        </div>
     );
 }
 
@@ -293,11 +301,11 @@ function Field({
     children: ReactNode;
 }) {
     return (
-        <div className="grid gap-2">
+        <div className="grid content-start gap-2">
             <Label htmlFor={id}>
                 {label}
                 {optional && (
-                    <span className="font-normal text-muted-foreground">
+                    <span className="ml-1 font-normal text-muted-foreground">
                         (optional)
                     </span>
                 )}
