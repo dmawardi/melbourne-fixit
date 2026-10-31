@@ -3,6 +3,8 @@
 namespace App\Models;
 
 use App\Enums\JobCategory;
+use App\Enums\VendorDocument;
+use App\Enums\VendorDocumentStatus;
 use App\Enums\VendorType;
 use Carbon\CarbonImmutable;
 use Database\Factories\VendorFactory;
@@ -70,6 +72,16 @@ class Vendor extends Model
     use HasFactory, SoftDeletes;
 
     /**
+     * How many days before a document expires to start flagging it.
+     */
+    public const EXPIRY_WARNING_DAYS = 30;
+
+    /**
+     * How many months the documents can go between checks.
+     */
+    public const CHECK_INTERVAL_MONTHS = 12;
+
+    /**
      * Get the attributes that should be cast.
      *
      * @return array<string, mixed>
@@ -119,6 +131,88 @@ class Vendor extends Model
     {
         return $this->type === VendorType::General
             || ($this->categories?->contains($category) ?? false);
+    }
+
+    /**
+     * Get the documents that apply to the vendor's job types.
+     *
+     * @return list<VendorDocument>
+     */
+    public function applicableDocuments(): array
+    {
+        return array_values(array_filter(
+            VendorDocument::cases(),
+            fn (VendorDocument $document): bool => $document->categories() === null
+                || collect($document->categories())->contains(fn (JobCategory $category): bool => $this->canHandle($category)),
+        ));
+    }
+
+    /**
+     * Determine whether the vendor certainly needs the document. Other documents depend on the job
+     * or on how the vendor operates, so they can't be flagged just for being empty.
+     */
+    private function requiresDocument(VendorDocument $document): bool
+    {
+        return match ($document) {
+            VendorDocument::Business, VendorDocument::PublicLiability => true,
+            VendorDocument::PlumbingLicence => $this->categories?->contains(JobCategory::Plumbing) ?? false,
+            VendorDocument::ElectricalRegistration => $this->categories?->contains(JobCategory::Electrical) ?? false,
+            default => false,
+        };
+    }
+
+    /**
+     * Get the problems with the vendor's documents, most serious first.
+     *
+     * @return list<array{message: string, status: VendorDocumentStatus}>
+     */
+    public function documentIssues(): array
+    {
+        $today = today(config('business.timezone'));
+        $issues = [];
+
+        foreach ($this->applicableDocuments() as $document) {
+            $expiryColumn = $document->expiryColumn();
+            $expiresOn = $expiryColumn ? $this->{$expiryColumn} : null;
+
+            if ($this->requiresDocument($document) && (! $this->{$document->numberColumn()} || ($expiryColumn && ! $expiresOn))) {
+                $issues[] = [
+                    'message' => ($document === VendorDocument::Business ? 'ABN' : $document->label()).' missing',
+                    'status' => VendorDocumentStatus::ActionNeeded,
+                ];
+            } elseif ($expiresOn && $expiresOn->toDateString() < $today->toDateString()) {
+                $issues[] = [
+                    'message' => $document->label().' expired '.$expiresOn->format('j M Y'),
+                    'status' => VendorDocumentStatus::ActionNeeded,
+                ];
+            } elseif ($expiresOn && $expiresOn->toDateString() <= $today->copy()->addDays(self::EXPIRY_WARNING_DAYS)->toDateString()) {
+                $issues[] = [
+                    'message' => $document->label().' expires '.$expiresOn->format('j M Y'),
+                    'status' => VendorDocumentStatus::ExpiringSoon,
+                ];
+            }
+        }
+
+        if (! $this->documents_checked_on) {
+            $issues[] = ['message' => 'Documents never checked', 'status' => VendorDocumentStatus::ActionNeeded];
+        } elseif ($this->documents_checked_on->toDateString() < $today->copy()->subMonths(self::CHECK_INTERVAL_MONTHS)->toDateString()) {
+            $issues[] = [
+                'message' => 'Documents last checked '.$this->documents_checked_on->format('j M Y'),
+                'status' => VendorDocumentStatus::ActionNeeded,
+            ];
+        }
+
+        usort($issues, fn (array $a, array $b): int => $a['status']->priority() <=> $b['status']->priority());
+
+        return $issues;
+    }
+
+    /**
+     * Get the overall status of the vendor's documents.
+     */
+    public function documentStatus(): VendorDocumentStatus
+    {
+        return $this->documentIssues()[0]['status'] ?? VendorDocumentStatus::UpToDate;
     }
 
     /**

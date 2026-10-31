@@ -1,16 +1,38 @@
 import { Head, Link } from '@inertiajs/react';
 import { Pencil, Plus, Trash2, Truck } from 'lucide-react';
+import VendorDocumentIssues from '@/components/admin/vendor-document-issues';
+import VendorDocumentStatus from '@/components/admin/vendor-document-status';
 import VendorController from '@/actions/App/Http/Controllers/Admin/VendorController';
 import ConfirmDeleteDialog from '@/components/confirm-delete-dialog';
 import Heading from '@/components/heading';
 import Pagination from '@/components/pagination';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
 import { create, edit, index } from '@/routes/admin/vendors';
 import type { Paginated, Vendor } from '@/types';
 
-export default function Index({ vendors }: { vendors: Paginated<Vendor> }) {
+type Props = {
+    vendors: Paginated<Vendor>;
+    filters: { documents: string | null };
+    counts: { all: number; action_needed: number; expiring_soon: number };
+};
+
+export default function Index({ vendors, filters, counts }: Props) {
     const { data, links, meta } = vendors;
+    const tabs = [
+        { value: null, label: 'All', count: counts.all },
+        {
+            value: 'action_needed',
+            label: 'Action needed',
+            count: counts.action_needed,
+        },
+        {
+            value: 'expiring_soon',
+            label: 'Expiring soon',
+            count: counts.expiring_soon,
+        },
+    ];
 
     return (
         <>
@@ -34,6 +56,35 @@ export default function Index({ vendors }: { vendors: Paginated<Vendor> }) {
                     </Button>
                 </div>
 
+                <nav
+                    aria-label="Filter by document status"
+                    className="flex flex-wrap gap-2"
+                >
+                    {tabs.map((tab) => (
+                        <Link
+                            key={tab.label}
+                            href={index(
+                                tab.value
+                                    ? { query: { documents: tab.value } }
+                                    : undefined,
+                            )}
+                            aria-current={
+                                filters.documents === tab.value
+                                    ? 'page'
+                                    : undefined
+                            }
+                            className={cn(
+                                'rounded-full border px-3 py-1 text-sm font-medium transition-colors',
+                                filters.documents === tab.value
+                                    ? 'border-primary bg-primary text-primary-foreground'
+                                    : 'hover:bg-accent',
+                            )}
+                        >
+                            {tab.label} ({tab.count})
+                        </Link>
+                    ))}
+                </nav>
+
                 {data.length === 0 ? (
                     <div className="rounded-xl border border-dashed p-10 text-center">
                         <Truck
@@ -42,8 +93,16 @@ export default function Index({ vendors }: { vendors: Paginated<Vendor> }) {
                         />
                         <Heading
                             variant="small"
-                            title="No vendors yet"
-                            description="Add a vendor to start assigning it to job requests."
+                            title={
+                                filters.documents
+                                    ? 'No vendors to show'
+                                    : 'No vendors yet'
+                            }
+                            description={
+                                filters.documents
+                                    ? 'No vendors have this document status.'
+                                    : 'Add a vendor to start assigning it to job requests.'
+                            }
                         />
                     </div>
                 ) : (
@@ -54,9 +113,17 @@ export default function Index({ vendors }: { vendors: Paginated<Vendor> }) {
                                 className="flex flex-wrap items-center gap-4 p-4"
                             >
                                 <div className="min-w-0 flex-1 space-y-1">
-                                    <h2 className="font-medium break-words">
-                                        {vendor.name}
-                                    </h2>
+                                    <div className="flex flex-wrap items-center gap-2">
+                                        <h2 className="font-medium break-words">
+                                            {vendor.name}
+                                        </h2>
+                                        <VendorDocumentStatus
+                                            status={vendor.document_status}
+                                        />
+                                    </div>
+                                    <VendorDocumentIssues
+                                        issues={vendor.document_issues}
+                                    />
                                     <p className="text-sm text-muted-foreground">
                                         {[
                                             vendor.contact_name,

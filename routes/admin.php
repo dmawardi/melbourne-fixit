@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\JobRequestController;
 use App\Http\Controllers\Admin\JobRequestFileController;
 use App\Http\Controllers\Admin\JobRequestMessageController;
@@ -11,7 +12,7 @@ Route::middleware(['auth', 'verified', 'can:admin'])
     ->prefix('admin')
     ->name('admin.')
     ->group(function () {
-        Route::redirect('/', '/admin/requests')->name('index');
+        Route::get('/', DashboardController::class)->name('index');
 
         Route::get('requests', [JobRequestController::class, 'index'])->name('job-requests.index');
         Route::get('requests/{jobRequest}', [JobRequestController::class, 'show'])->name('job-requests.show');

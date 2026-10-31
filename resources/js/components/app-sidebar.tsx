@@ -1,5 +1,11 @@
 import { Link, usePage } from '@inertiajs/react';
-import { ClipboardList, Inbox, Plus, Truck } from 'lucide-react';
+import {
+    ClipboardList,
+    Inbox,
+    LayoutDashboard,
+    Plus,
+    Truck,
+} from 'lucide-react';
 import AppLogo from '@/components/app-logo';
 import { NavMain } from '@/components/nav-main';
 import { NavUser } from '@/components/nav-user';
@@ -12,6 +18,7 @@ import {
     SidebarMenuButton,
     SidebarMenuItem,
 } from '@/components/ui/sidebar';
+import { index as adminDashboard } from '@/routes/admin';
 import { index as adminRequests } from '@/routes/admin/job-requests';
 import { index as adminVendors } from '@/routes/admin/vendors';
 import { create, index } from '@/routes/job-requests';
@@ -31,6 +38,11 @@ const mainNavItems: NavItem[] = [
 ];
 
 const adminNavItems: NavItem[] = [
+    {
+        title: 'Dashboard',
+        href: adminDashboard(),
+        icon: LayoutDashboard,
+    },
     {
         title: 'Requests',
         href: adminRequests(),

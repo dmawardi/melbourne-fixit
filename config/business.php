@@ -28,6 +28,9 @@ return [
     'region' => 'VIC',
     'country' => 'AU',
 
+    // Used for dates that follow the local calendar, such as document expiry.
+    'timezone' => 'Australia/Melbourne',
+
     'service_areas' => [
         'Melbourne CBD and inner suburbs',
         'Northern suburbs',

@@ -19,6 +19,7 @@ type Props = {
         status: string | null;
         category: string | null;
         claimed: string | null;
+        vendor: string | null;
     };
     options: {
         statuses: Option[];
@@ -77,6 +78,15 @@ export default function Index({ jobRequests, filters, options }: Props) {
                             { value: 'no', label: 'No' },
                         ]}
                         value={filters.claimed}
+                    />
+                    <FilterSelect
+                        id="vendor"
+                        label="Vendor"
+                        options={[
+                            { value: 'needs_vendor', label: 'Needs a vendor' },
+                            { value: 'assigned', label: 'Assigned' },
+                        ]}
+                        value={filters.vendor}
                     />
                     <Button type="submit" variant="outline">
                         Filter

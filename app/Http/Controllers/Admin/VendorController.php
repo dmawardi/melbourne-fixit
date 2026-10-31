@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Enums\JobCategory;
 use App\Enums\VendorDocument;
+use App\Enums\VendorDocumentStatus;
 use App\Enums\VendorType;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\StoreVendorRequest;
@@ -12,23 +13,55 @@ use App\Http\Resources\Admin\VendorResource;
 use App\Models\Vendor;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Inertia\Inertia;
 use Inertia\Response;
 
 class VendorController extends Controller
 {
     /**
-     * Show all vendors, excluding archived ones.
+     * The number of vendors shown on each page.
      */
-    public function index(): Response
+    private const PER_PAGE = 25;
+
+    /**
+     * Show all vendors, excluding archived ones, with those needing attention first.
+     *
+     * The status is worked out in PHP, so the filtering and paging happen here too.
+     */
+    public function index(Request $request): Response
     {
+        $status = VendorDocumentStatus::tryFrom($request->string('documents')->value());
+
         $vendors = Vendor::query()
             ->withCount('jobRequests')
             ->orderBy('name')
-            ->paginate(25);
+            ->get()
+            ->sortBy(fn (Vendor $vendor): int => $vendor->documentStatus()->priority())
+            ->values();
+
+        $matching = $status
+            ? $vendors->filter(fn (Vendor $vendor): bool => $vendor->documentStatus() === $status)->values()
+            : $vendors;
+
+        $page = LengthAwarePaginator::resolveCurrentPage();
+
+        $paginated = new LengthAwarePaginator(
+            $matching->forPage($page, self::PER_PAGE)->values(),
+            $matching->count(),
+            self::PER_PAGE,
+            $page,
+            ['path' => $request->url(), 'query' => $request->query()],
+        );
 
         return Inertia::render('admin/vendors/index', [
-            'vendors' => VendorResource::collection($vendors),
+            'vendors' => VendorResource::collection($paginated),
+            'filters' => ['documents' => $status?->value],
+            'counts' => [
+                'all' => $vendors->count(),
+                'action_needed' => $vendors->filter(fn (Vendor $vendor): bool => $vendor->documentStatus() === VendorDocumentStatus::ActionNeeded)->count(),
+                'expiring_soon' => $vendors->filter(fn (Vendor $vendor): bool => $vendor->documentStatus() === VendorDocumentStatus::ExpiringSoon)->count(),
+            ],
         ]);
     }
 

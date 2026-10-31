@@ -42,6 +42,11 @@ class VendorResource extends JsonResource
             'electrical_registration_number' => $this->electrical_registration_number,
             'electrical_registration_expires_on' => $this->electrical_registration_expires_on?->toDateString(),
             'documents_checked_on' => $this->documents_checked_on?->toDateString(),
+            'document_status' => $this->documentStatus()->toOption(),
+            'document_issues' => array_map(fn (array $issue): array => [
+                'message' => $issue['message'],
+                'status' => $issue['status']->value,
+            ], $this->documentIssues()),
             'job_requests_count' => $this->whenCounted('jobRequests'),
             'archived' => $this->trashed(),
         ];

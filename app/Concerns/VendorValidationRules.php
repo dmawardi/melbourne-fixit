@@ -43,7 +43,7 @@ trait VendorValidationRules
             'plumbing_licence_expires_on' => ['nullable', 'date', 'required_with:plumbing_licence_number'],
             'electrical_registration_number' => ['nullable', 'string', 'max:64'],
             'electrical_registration_expires_on' => ['nullable', 'date', 'required_with:electrical_registration_number'],
-            'documents_checked_on' => ['nullable', 'date', 'before_or_equal:today'],
+            'documents_checked_on' => ['nullable', 'date', 'before_or_equal:'.today(config('business.timezone'))->toDateString()],
         ];
     }
 

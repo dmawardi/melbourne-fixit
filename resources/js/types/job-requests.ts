@@ -110,6 +110,8 @@ export type Vendor = {
     electrical_registration_number: string | null;
     electrical_registration_expires_on: string | null;
     documents_checked_on: string | null;
+    document_status: Option;
+    document_issues: { message: string; status: string }[];
     job_requests_count?: number;
     archived: boolean;
 };

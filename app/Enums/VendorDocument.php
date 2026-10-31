@@ -61,6 +61,36 @@ enum VendorDocument: string
     }
 
     /**
+     * The column holding the document's number.
+     */
+    public function numberColumn(): string
+    {
+        return match ($this) {
+            self::Business => 'abn',
+            self::PublicLiability => 'public_liability_policy_number',
+            self::WorkCover => 'workcover_policy_number',
+            self::BuilderRegistration => 'builder_registration_number',
+            self::PlumbingLicence => 'plumbing_licence_number',
+            self::ElectricalRegistration => 'electrical_registration_number',
+        };
+    }
+
+    /**
+     * The column holding the document's expiry date, if it has one.
+     */
+    public function expiryColumn(): ?string
+    {
+        return match ($this) {
+            self::Business => null,
+            self::PublicLiability => 'public_liability_expires_on',
+            self::WorkCover => 'workcover_expires_on',
+            self::BuilderRegistration => 'builder_registration_expires_on',
+            self::PlumbingLicence => 'plumbing_licence_expires_on',
+            self::ElectricalRegistration => 'electrical_registration_expires_on',
+        };
+    }
+
+    /**
      * The job categories that call for the document. Null means every vendor needs it.
      *
      * @return list<JobCategory>|null

@@ -21,6 +21,7 @@ class AdminAccessTest extends TestCase
     public static function adminRoutes(): array
     {
         return [
+            'dashboard' => ['get', 'admin.index'],
             'index' => ['get', 'admin.job-requests.index'],
             'show' => ['get', 'admin.job-requests.show'],
             'update' => ['patch', 'admin.job-requests.update'],
@@ -53,7 +54,7 @@ class AdminAccessTest extends TestCase
             str_contains($route, 'messages.') => [$jobRequest, $message],
             in_array($route, ['admin.vendors.index', 'admin.vendors.create', 'admin.vendors.store'], true) => [],
             str_contains($route, 'admin.vendors.') => [Vendor::factory()->create()],
-            $route === 'admin.job-requests.index' => [],
+            in_array($route, ['admin.index', 'admin.job-requests.index'], true) => [],
             default => [$jobRequest],
         });
     }

@@ -192,6 +192,43 @@ class JobRequest extends Model
     }
 
     /**
+     * Scope a query to new requests no one has reviewed yet.
+     *
+     * @param  Builder<JobRequest>  $query
+     */
+    #[Scope]
+    protected function awaitingReview(Builder $query): void
+    {
+        $query->where('status', JobRequestStatus::Submitted);
+    }
+
+    /**
+     * Scope a query to requests past the new stage that are still open and have no vendor.
+     *
+     * @param  Builder<JobRequest>  $query
+     */
+    #[Scope]
+    protected function needsVendor(Builder $query): void
+    {
+        $query->whereNull('vendor_id')->whereIn('status', [
+            JobRequestStatus::Reviewing,
+            JobRequestStatus::Quoted,
+            JobRequestStatus::Scheduled,
+        ]);
+    }
+
+    /**
+     * Order a query with emergencies first.
+     *
+     * @param  Builder<JobRequest>  $query
+     */
+    #[Scope]
+    protected function urgentFirst(Builder $query): void
+    {
+        $query->orderByRaw('CASE WHEN urgency = ? THEN 0 ELSE 1 END', [JobUrgency::Emergency->value]);
+    }
+
+    /**
      * Scope a query to requests not yet linked to a user account.
      *
      * @param  Builder<JobRequest>  $query

@@ -38,6 +38,7 @@ class JobRequestController extends Controller
             'status' => JobRequestStatus::tryFrom($request->string('status')->value())?->value,
             'category' => JobCategory::tryFrom($request->string('category')->value())?->value,
             'claimed' => in_array($request->query('claimed'), ['yes', 'no'], true) ? $request->query('claimed') : null,
+            'vendor' => in_array($request->query('vendor'), ['needs_vendor', 'assigned'], true) ? $request->query('vendor') : null,
         ];
 
         $jobRequests = JobRequest::query()
@@ -58,6 +59,8 @@ class JobRequestController extends Controller
             ->when($filters['category'], fn (Builder $query, string $category) => $query->where('category', $category))
             ->when($filters['claimed'] === 'yes', fn (Builder $query) => $query->whereNotNull('user_id'))
             ->when($filters['claimed'] === 'no', fn (Builder $query) => $query->whereNull('user_id'))
+            ->when($filters['vendor'] === 'needs_vendor', fn (Builder $query) => $query->needsVendor())
+            ->when($filters['vendor'] === 'assigned', fn (Builder $query) => $query->whereNotNull('vendor_id'))
             ->orderByDesc('last_activity_at')
             ->orderByDesc('created_at')
             ->paginate(25)
