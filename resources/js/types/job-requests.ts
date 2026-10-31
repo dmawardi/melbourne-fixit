@@ -96,6 +96,20 @@ export type Vendor = {
     email: string | null;
     phone: string | null;
     notes: string | null;
+    abn: string | null;
+    public_liability_insurer: string | null;
+    public_liability_policy_number: string | null;
+    public_liability_cover: number | null;
+    public_liability_expires_on: string | null;
+    workcover_policy_number: string | null;
+    workcover_expires_on: string | null;
+    builder_registration_number: string | null;
+    builder_registration_expires_on: string | null;
+    plumbing_licence_number: string | null;
+    plumbing_licence_expires_on: string | null;
+    electrical_registration_number: string | null;
+    electrical_registration_expires_on: string | null;
+    documents_checked_on: string | null;
     job_requests_count?: number;
     archived: boolean;
 };
@@ -106,9 +120,17 @@ export type VendorChoice = {
     handles_category: boolean;
 };
 
+export type VendorDocumentRequirement = Option & {
+    guidance: string;
+    url: string;
+    // Null means every vendor needs the document.
+    categories: string[] | null;
+};
+
 export type VendorOptions = {
     types: Option[];
     categories: Option[];
+    documents: VendorDocumentRequirement[];
 };
 
 export type AdminJobRequest = Omit<JobRequest, 'files' | 'messages'> & {

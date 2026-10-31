@@ -23,6 +23,22 @@ return new class extends Migration
             $table->string('phone', 32)->nullable();
             $table->text('notes')->nullable();
 
+            // Licences and insurance, recorded from the vendor's documents.
+            $table->string('abn', 14)->nullable();
+            $table->string('public_liability_insurer')->nullable();
+            $table->string('public_liability_policy_number', 64)->nullable();
+            $table->unsignedBigInteger('public_liability_cover')->nullable();
+            $table->date('public_liability_expires_on')->nullable();
+            $table->string('workcover_policy_number', 64)->nullable();
+            $table->date('workcover_expires_on')->nullable();
+            $table->string('builder_registration_number', 64)->nullable();
+            $table->date('builder_registration_expires_on')->nullable();
+            $table->string('plumbing_licence_number', 64)->nullable();
+            $table->date('plumbing_licence_expires_on')->nullable();
+            $table->string('electrical_registration_number', 64)->nullable();
+            $table->date('electrical_registration_expires_on')->nullable();
+            $table->date('documents_checked_on')->nullable();
+
             $table->timestamps();
             // Soft deleted so requests keep the vendor they were assigned.
             $table->softDeletes();

@@ -31,6 +31,23 @@ class VendorFactory extends Factory
     }
 
     /**
+     * Indicate that the vendor has supplied its business and insurance documents.
+     */
+    public function withDocuments(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'abn' => fake()->numerify('## ### ### ###'),
+            'public_liability_insurer' => fake()->company(),
+            'public_liability_policy_number' => fake()->bothify('PL-#######'),
+            'public_liability_cover' => 20_000_000,
+            'public_liability_expires_on' => now()->addMonths(8),
+            'workcover_policy_number' => fake()->numerify('########'),
+            'workcover_expires_on' => now()->addMonths(5),
+            'documents_checked_on' => now()->subWeek(),
+        ]);
+    }
+
+    /**
      * Indicate that the vendor takes all kinds of jobs.
      */
     public function general(): static

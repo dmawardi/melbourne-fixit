@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Enums\JobCategory;
+use App\Enums\VendorDocument;
 use App\Enums\VendorType;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\StoreVendorRequest;
@@ -91,13 +92,14 @@ class VendorController extends Controller
     /**
      * Get the select options for the vendor form.
      *
-     * @return array<string, list<array{value: string, label: string}>>
+     * @return array<string, list<array<string, mixed>>>
      */
     private function options(): array
     {
         return [
             'types' => VendorType::options(),
             'categories' => JobCategory::options(),
+            'documents' => VendorDocument::requirements(),
         ];
     }
 }

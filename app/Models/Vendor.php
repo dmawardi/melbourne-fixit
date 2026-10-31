@@ -23,6 +23,20 @@ use Illuminate\Support\Collection;
  * @property string|null $email
  * @property string|null $phone
  * @property string|null $notes
+ * @property string|null $abn
+ * @property string|null $public_liability_insurer
+ * @property string|null $public_liability_policy_number
+ * @property int|null $public_liability_cover
+ * @property CarbonImmutable|null $public_liability_expires_on
+ * @property string|null $workcover_policy_number
+ * @property CarbonImmutable|null $workcover_expires_on
+ * @property string|null $builder_registration_number
+ * @property CarbonImmutable|null $builder_registration_expires_on
+ * @property string|null $plumbing_licence_number
+ * @property CarbonImmutable|null $plumbing_licence_expires_on
+ * @property string|null $electrical_registration_number
+ * @property CarbonImmutable|null $electrical_registration_expires_on
+ * @property CarbonImmutable|null $documents_checked_on
  * @property CarbonImmutable|null $created_at
  * @property CarbonImmutable|null $updated_at
  * @property CarbonImmutable|null $deleted_at
@@ -35,6 +49,20 @@ use Illuminate\Support\Collection;
     'email',
     'phone',
     'notes',
+    'abn',
+    'public_liability_insurer',
+    'public_liability_policy_number',
+    'public_liability_cover',
+    'public_liability_expires_on',
+    'workcover_policy_number',
+    'workcover_expires_on',
+    'builder_registration_number',
+    'builder_registration_expires_on',
+    'plumbing_licence_number',
+    'plumbing_licence_expires_on',
+    'electrical_registration_number',
+    'electrical_registration_expires_on',
+    'documents_checked_on',
 ])]
 class Vendor extends Model
 {
@@ -51,6 +79,13 @@ class Vendor extends Model
         return [
             'type' => VendorType::class,
             'categories' => AsEnumCollection::of(JobCategory::class),
+            'public_liability_cover' => 'integer',
+            'public_liability_expires_on' => 'immutable_date',
+            'workcover_expires_on' => 'immutable_date',
+            'builder_registration_expires_on' => 'immutable_date',
+            'plumbing_licence_expires_on' => 'immutable_date',
+            'electrical_registration_expires_on' => 'immutable_date',
+            'documents_checked_on' => 'immutable_date',
         ];
     }
 

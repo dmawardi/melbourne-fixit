@@ -25,6 +25,25 @@ trait VendorValidationRules
             'email' => ['nullable', 'email', 'max:255'],
             'phone' => ['nullable', 'string', 'max:32'],
             'notes' => ['nullable', 'string', 'max:20000'],
+            'abn' => ['nullable', 'regex:/^\d{2} ?\d{3} ?\d{3} ?\d{3}$/'],
+            'public_liability_insurer' => ['nullable', 'string', 'max:255'],
+            'public_liability_policy_number' => ['nullable', 'string', 'max:64'],
+            // Electrical contractors must hold at least $5 million in cover.
+            'public_liability_cover' => [
+                $this->filled('electrical_registration_number') ? 'required' : 'nullable',
+                'integer',
+                'min:'.($this->filled('electrical_registration_number') ? 5_000_000 : 0),
+            ],
+            'public_liability_expires_on' => ['nullable', 'date', 'required_with:public_liability_policy_number'],
+            'workcover_policy_number' => ['nullable', 'string', 'max:64'],
+            'workcover_expires_on' => ['nullable', 'date', 'required_with:workcover_policy_number'],
+            'builder_registration_number' => ['nullable', 'string', 'max:64'],
+            'builder_registration_expires_on' => ['nullable', 'date', 'required_with:builder_registration_number'],
+            'plumbing_licence_number' => ['nullable', 'string', 'max:64'],
+            'plumbing_licence_expires_on' => ['nullable', 'date', 'required_with:plumbing_licence_number'],
+            'electrical_registration_number' => ['nullable', 'string', 'max:64'],
+            'electrical_registration_expires_on' => ['nullable', 'date', 'required_with:electrical_registration_number'],
+            'documents_checked_on' => ['nullable', 'date', 'before_or_equal:today'],
         ];
     }
 
@@ -38,6 +57,11 @@ trait VendorValidationRules
         return [
             'categories.required' => __('Choose at least one type of job for a specialist.'),
             'categories.min' => __('Choose at least one type of job for a specialist.'),
+            'abn.regex' => __('Enter an 11-digit ABN.'),
+            'public_liability_cover.required' => __('Enter the cover amount. Electrical contractors must hold at least $5 million.'),
+            'public_liability_cover.min' => __('Electrical contractors must hold at least $5 million in cover.'),
+            '*.required_with' => __('Enter the expiry date.'),
+            'documents_checked_on.before_or_equal' => __('This date can\'t be in the future.'),
         ];
     }
 }

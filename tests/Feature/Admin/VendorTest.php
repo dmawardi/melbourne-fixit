@@ -55,6 +55,83 @@ class VendorTest extends TestCase
             ->assertInertia(fn ($page) => $page->component('admin/vendors/edit')->where('vendor.id', $vendor->id));
     }
 
+    public function test_the_vendor_form_lists_the_documents_to_collect()
+    {
+        $this->actingAs($this->admin)
+            ->get(route('admin.vendors.create'))
+            ->assertInertia(fn ($page) => $page
+                ->has('options.documents', 6)
+                ->where('options.documents.1.value', 'public_liability')
+                ->where('options.documents.1.categories', null)
+                ->where('options.documents.5.value', 'electrical_registration')
+                ->where('options.documents.5.categories', ['electrical', 'kitchen_renovation', 'bathroom_renovation'])
+            );
+    }
+
+    public function test_admins_can_record_a_vendors_documents()
+    {
+        $this->actingAs($this->admin)
+            ->post(route('admin.vendors.store'), [
+                'name' => 'Brightline Electrical',
+                'type' => 'general',
+                'abn' => '51 824 753 556',
+                'public_liability_policy_number' => 'PL-1',
+                'public_liability_cover' => 5_000_000,
+                'public_liability_expires_on' => '2027-06-30',
+                'electrical_registration_number' => 'REC 12345',
+                'electrical_registration_expires_on' => '2027-01-31',
+                'documents_checked_on' => today()->toDateString(),
+            ])
+            ->assertRedirect(route('admin.vendors.index'));
+
+        $vendor = Vendor::sole();
+        $this->assertSame('REC 12345', $vendor->electrical_registration_number);
+        $this->assertSame('2027-06-30', $vendor->public_liability_expires_on->toDateString());
+
+        $this->actingAs($this->admin)
+            ->get(route('admin.vendors.edit', $vendor))
+            ->assertInertia(fn ($page) => $page->where('vendor.electrical_registration_expires_on', '2027-01-31'));
+    }
+
+    public function test_a_licence_or_policy_number_needs_an_expiry_date()
+    {
+        $this->actingAs($this->admin)
+            ->post(route('admin.vendors.store'), [
+                'name' => 'Northside Plumbing',
+                'type' => 'general',
+                'plumbing_licence_number' => '54321',
+                'workcover_policy_number' => '12345678',
+            ])
+            ->assertSessionHasErrors(['plumbing_licence_expires_on', 'workcover_expires_on']);
+    }
+
+    public function test_electrical_contractors_need_at_least_five_million_in_cover()
+    {
+        $vendor = [
+            'name' => 'Brightline Electrical',
+            'type' => 'general',
+            'electrical_registration_number' => 'REC 12345',
+            'electrical_registration_expires_on' => '2027-01-31',
+        ];
+
+        $this->actingAs($this->admin)
+            ->post(route('admin.vendors.store'), $vendor)
+            ->assertSessionHasErrors('public_liability_cover');
+
+        $this->actingAs($this->admin)
+            ->post(route('admin.vendors.store'), [...$vendor, 'public_liability_cover' => 4_999_999])
+            ->assertSessionHasErrors('public_liability_cover');
+
+        $this->assertSame(0, Vendor::count());
+    }
+
+    public function test_an_invalid_abn_is_rejected()
+    {
+        $this->actingAs($this->admin)
+            ->post(route('admin.vendors.store'), ['name' => 'Test', 'type' => 'general', 'abn' => '123'])
+            ->assertSessionHasErrors('abn');
+    }
+
     public function test_admins_can_add_a_general_vendor()
     {
         $this->actingAs($this->admin)
