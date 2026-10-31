@@ -6,6 +6,7 @@ use App\Enums\ActivityEvent;
 use App\Enums\FileKind;
 use App\Enums\JobCategory;
 use App\Enums\JobRequestStatus;
+use App\Enums\JobUrgency;
 use App\Enums\Visibility;
 use App\Http\Controllers\Concerns\ProvidesJobRequestOptions;
 use App\Http\Controllers\Controller;
@@ -29,7 +30,7 @@ class JobRequestController extends Controller
     private const ACTIVITY_LIMIT = 100;
 
     /**
-     * Show all job requests, most recently active first.
+     * Show all job requests, with open emergencies first and then the most recently active.
      */
     public function index(Request $request): Response
     {
@@ -37,6 +38,7 @@ class JobRequestController extends Controller
             'search' => $request->string('search')->trim()->value(),
             'status' => JobRequestStatus::tryFrom($request->string('status')->value())?->value,
             'category' => JobCategory::tryFrom($request->string('category')->value())?->value,
+            'urgency' => JobUrgency::tryFrom($request->string('urgency')->value())?->value,
             'claimed' => in_array($request->query('claimed'), ['yes', 'no'], true) ? $request->query('claimed') : null,
             'vendor' => in_array($request->query('vendor'), ['needs_vendor', 'assigned'], true) ? $request->query('vendor') : null,
         ];
@@ -57,10 +59,12 @@ class JobRequestController extends Controller
             })
             ->when($filters['status'], fn (Builder $query, string $status) => $query->where('status', $status))
             ->when($filters['category'], fn (Builder $query, string $category) => $query->where('category', $category))
+            ->when($filters['urgency'], fn (Builder $query, string $urgency) => $query->where('urgency', $urgency))
             ->when($filters['claimed'] === 'yes', fn (Builder $query) => $query->whereNotNull('user_id'))
             ->when($filters['claimed'] === 'no', fn (Builder $query) => $query->whereNull('user_id'))
             ->when($filters['vendor'] === 'needs_vendor', fn (Builder $query) => $query->needsVendor())
             ->when($filters['vendor'] === 'assigned', fn (Builder $query) => $query->whereNotNull('vendor_id'))
+            ->openEmergenciesFirst()
             ->orderByDesc('last_activity_at')
             ->orderByDesc('created_at')
             ->paginate(25)
@@ -72,6 +76,7 @@ class JobRequestController extends Controller
             'options' => [
                 'statuses' => JobRequestStatus::options(),
                 'categories' => JobCategory::options(),
+                'urgencies' => JobUrgency::options(),
             ],
         ]);
     }

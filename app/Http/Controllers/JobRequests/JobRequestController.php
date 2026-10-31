@@ -5,6 +5,7 @@ namespace App\Http\Controllers\JobRequests;
 use App\Actions\JobRequests\ClaimJobRequests;
 use App\Enums\ActivityEvent;
 use App\Enums\JobCategory;
+use App\Enums\JobUrgency;
 use App\Http\Controllers\Concerns\ProvidesJobRequestOptions;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\JobRequests\StoreJobRequestRequest;
@@ -12,10 +13,13 @@ use App\Http\Requests\JobRequests\UpdateJobRequestRequest;
 use App\Http\Resources\JobRequestResource;
 use App\Models\JobRequest;
 use App\Models\User;
+use App\Notifications\JobRequestReceived;
+use App\Notifications\NewJobRequest;
 use App\Support\StructuredData;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Notification;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -62,6 +66,7 @@ class JobRequestController extends Controller
             $jobRequest->claimed_at = now();
             $jobRequest->save();
             $jobRequest->recordActivity(ActivityEvent::Created, by: $user);
+            $this->sendNewRequestEmails($jobRequest);
 
             Inertia::flash('toast', ['type' => 'success', 'message' => __('Request submitted. You can now add photos.')]);
 
@@ -70,8 +75,12 @@ class JobRequestController extends Controller
 
         $jobRequest->save();
         $jobRequest->recordActivity(ActivityEvent::Created);
+        $this->sendNewRequestEmails($jobRequest);
 
-        return to_route('job-requests.submitted')->with('submittedEmail', $jobRequest->contact_email);
+        return to_route('job-requests.submitted')->with([
+            'submittedEmail' => $jobRequest->contact_email,
+            'submittedEmergency' => $jobRequest->urgency === JobUrgency::Emergency,
+        ]);
     }
 
     /**
@@ -87,6 +96,7 @@ class JobRequestController extends Controller
 
         return Inertia::render('job-requests/submitted', [
             'email' => $email,
+            'emergency' => $request->session()->get('submittedEmergency', false),
         ]);
     }
 
@@ -134,7 +144,13 @@ class JobRequestController extends Controller
      */
     public function update(UpdateJobRequestRequest $request, JobRequest $jobRequest): RedirectResponse
     {
+        $wasEmergency = $jobRequest->urgency === JobUrgency::Emergency;
+
         $jobRequest->updateWithActivity($request->validated(), $request->user());
+
+        if (! $wasEmergency && $jobRequest->urgency === JobUrgency::Emergency) {
+            Notification::send(User::query()->admins()->get(), new NewJobRequest($jobRequest));
+        }
 
         Inertia::flash('toast', ['type' => 'success', 'message' => __('Request updated.')]);
 
@@ -154,5 +170,16 @@ class JobRequestController extends Controller
         Inertia::flash('toast', ['type' => 'success', 'message' => __('Request deleted.')]);
 
         return to_route('job-requests.index');
+    }
+
+    /**
+     * Email the admins and the customer about a new request.
+     */
+    private function sendNewRequestEmails(JobRequest $jobRequest): void
+    {
+        Notification::send(User::query()->admins()->get(), new NewJobRequest($jobRequest));
+
+        Notification::route('mail', $jobRequest->contact_email)
+            ->notify(new JobRequestReceived($jobRequest->category, $jobRequest->urgency));
     }
 }

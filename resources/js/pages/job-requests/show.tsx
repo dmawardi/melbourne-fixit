@@ -4,6 +4,7 @@ import type { ReactNode } from 'react';
 import { useState } from 'react';
 import JobRequestController from '@/actions/App/Http/Controllers/JobRequests/JobRequestController';
 import ConfirmDeleteDialog from '@/components/confirm-delete-dialog';
+import EmergencyNotice from '@/components/job-requests/emergency-notice';
 import JobRequestFields from '@/components/job-requests/job-request-fields';
 import PhotoGallery from '@/components/job-requests/photo-gallery';
 import StatusBadge from '@/components/job-requests/status-badge';
@@ -39,6 +40,8 @@ export default function Show({ jobRequest, options, maxPhotos }: Props) {
             <Head title={jobRequest.title} />
 
             <div className="mx-auto w-full max-w-5xl space-y-8 p-4 md:p-6">
+                {jobRequest.open_emergency && <EmergencyNotice />}
+
                 <header className="flex flex-wrap items-start justify-between gap-4">
                     <div className="min-w-0 space-y-2">
                         <div className="flex flex-wrap items-center gap-2">

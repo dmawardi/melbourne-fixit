@@ -4,6 +4,7 @@ namespace Tests\Feature\Admin;
 
 use App\Enums\ActivityEvent;
 use App\Enums\JobRequestStatus;
+use App\Enums\JobUrgency;
 use App\Models\JobRequest;
 use App\Models\JobRequestFile;
 use App\Models\JobRequestMessage;
@@ -27,9 +28,9 @@ class JobRequestTest extends TestCase
 
     public function test_admins_can_list_all_requests_most_recently_active_first()
     {
-        $older = JobRequest::factory()->create(['last_activity_at' => now()->subDays(3)]);
-        $newest = JobRequest::factory()->create(['last_activity_at' => now()]);
-        $middle = JobRequest::factory()->claimedBy(User::factory()->create())->create(['last_activity_at' => now()->subDay()]);
+        $older = JobRequest::factory()->create(['urgency' => JobUrgency::Flexible, 'last_activity_at' => now()->subDays(3)]);
+        $newest = JobRequest::factory()->create(['urgency' => JobUrgency::Flexible, 'last_activity_at' => now()]);
+        $middle = JobRequest::factory()->claimedBy(User::factory()->create())->create(['urgency' => JobUrgency::Flexible, 'last_activity_at' => now()->subDay()]);
 
         $this->actingAs($this->admin)
             ->get(route('admin.job-requests.index'))

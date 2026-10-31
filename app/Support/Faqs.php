@@ -41,7 +41,7 @@ class Faqs
             ],
             [
                 'question' => 'What if it\'s an emergency?',
-                'answer' => 'Choose "Emergency (ASAP)" as the urgency and we\'ll prioritise your request. If there\'s immediate danger, such as a gas leak, exposed wiring or flooding, call 000 first.',
+                'answer' => 'Choose "Emergency (ASAP)" as the urgency. '.config('business.emergency_response').(config('business.phone') ? ' If you need us in a hurry, call '.config('business.phone').'.' : '').' If there\'s immediate danger, such as a gas leak, exposed wiring or flooding, call 000 first.',
             ],
         ];
     }

@@ -137,6 +137,17 @@ BUSINESS_SAME_AS="https://www.facebook.com/melbournefixit,https://www.instagram.
 
 Only include profiles the business controls. Leave it empty if there aren't any yet.
 
+### Email
+
+Admins are emailed about every new request, and customers get a confirmation. These emails include emergency alerts, so production needs all of the following:
+
+- **A queue worker.** Emails are queued, so without `php artisan queue:work` running (under Supervisor, for example) none are sent.
+- **A mail service.** Replace `MAIL_MAILER=log` and set a real `MAIL_FROM_ADDRESS`.
+- **The correct `APP_URL`,** which email links are built from.
+- **`BUSINESS_PHONE`,** which customers are told to call if they need help in a hurry.
+
+The response time customers are told to expect for emergencies is `emergency_response` in `config/business.php`.
+
 ### Deploying the SSR server
 
 Server-side rendering runs as a separate Node.js process alongside PHP. Laravel sends each page request to it (at `http://127.0.0.1:13714`, set in `config/inertia.php`) and gets back the rendered HTML. If the process isn't running, the site still works for visitors, but every page is sent as an empty shell that's filled in by JavaScript, and crawlers that don't run JavaScript see nothing.

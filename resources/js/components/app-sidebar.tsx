@@ -56,7 +56,7 @@ const adminNavItems: NavItem[] = [
 ];
 
 export function AppSidebar() {
-    const { auth } = usePage().props;
+    const { auth, emergencyCount } = usePage().props;
 
     return (
         <Sidebar collapsible="icon" variant="inset">
@@ -75,7 +75,14 @@ export function AppSidebar() {
             <SidebarContent>
                 <NavMain items={mainNavItems} />
                 {auth.isAdmin && (
-                    <NavMain items={adminNavItems} label="Admin" />
+                    <NavMain
+                        items={adminNavItems.map((item) =>
+                            item.title === 'Dashboard'
+                                ? { ...item, badge: emergencyCount }
+                                : item,
+                        )}
+                        label="Admin"
+                    />
                 )}
             </SidebarContent>
 

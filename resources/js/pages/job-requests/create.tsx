@@ -62,6 +62,8 @@ export default function Create({ options, defaults, structuredData }: Props) {
                     <p className="mt-2 text-sm font-medium lg:hidden">
                         Every tradesperson is vetted and insured, and licensed
                         where the work requires it.
+                        {site.phone &&
+                            ` Need us in a hurry? Call ${site.phone}.`}
                     </p>
                     {!auth.user && (
                         <p className="mt-2 text-sm text-muted-foreground">
@@ -154,16 +156,21 @@ export default function Create({ options, defaults, structuredData }: Props) {
                                 ))}
                             </ol>
                             {site.phone && (
-                                <a
-                                    href={`tel:${site.phone.replace(/[^\d+]/g, '')}`}
-                                    className="mt-4 flex items-center gap-2 border-t pt-4 text-sm font-medium"
-                                >
-                                    <Phone
-                                        className="size-4"
-                                        aria-hidden="true"
-                                    />
-                                    {site.phone}
-                                </a>
+                                <div className="mt-4 border-t pt-4 text-sm">
+                                    <p className="text-muted-foreground">
+                                        Need us in a hurry?
+                                    </p>
+                                    <a
+                                        href={`tel:${site.phone.replace(/[^\d+]/g, '')}`}
+                                        className="mt-1 flex items-center gap-2 font-medium"
+                                    >
+                                        <Phone
+                                            className="size-4"
+                                            aria-hidden="true"
+                                        />
+                                        {site.phone}
+                                    </a>
+                                </div>
                             )}
                         </div>
                     </div>

@@ -13,6 +13,7 @@ declare module '@inertiajs/core' {
             name: string;
             appUrl: string;
             site: Site;
+            emergencyCount: number;
             auth: Auth;
             sidebarOpen: boolean;
             [key: string]: unknown;

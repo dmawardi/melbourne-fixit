@@ -25,4 +25,5 @@ export type Site = {
     phone: string | null;
     email: string | null;
     abn: string | null;
+    emergencyResponse: string;
 };

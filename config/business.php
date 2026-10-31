@@ -31,6 +31,9 @@ return [
     // Used for dates that follow the local calendar, such as document expiry.
     'timezone' => 'Australia/Melbourne',
 
+    // What customers are told to expect after sending an emergency request.
+    'emergency_response' => 'We aim to respond as quickly as we can during business hours, and within 12 hours on nights and weekends.',
+
     'service_areas' => [
         'Melbourne CBD and inner suburbs',
         'Northern suburbs',

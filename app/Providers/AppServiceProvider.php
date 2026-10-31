@@ -51,6 +51,8 @@ class AppServiceProvider extends ServiceProvider
         RateLimiter::for('job-requests', fn (Request $request): array => [
             Limit::perMinute(3)->by($request->ip()),
             Limit::perDay(20)->by($request->ip()),
+            // Each request emails its contact address, so stop one address being flooded from many IPs.
+            Limit::perDay(10)->by('email:'.(is_string($request->input('contact_email')) ? mb_strtolower(trim($request->input('contact_email'))) : $request->ip())),
         ]);
 
         RateLimiter::for('job-request-photos', fn (Request $request): Limit => Limit::perMinute(20)->by($request->user()?->id ?: $request->ip()));

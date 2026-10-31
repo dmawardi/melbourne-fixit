@@ -52,6 +52,7 @@ export type JobRequest = {
     description: string;
     category: Option;
     urgency: Option;
+    open_emergency: boolean;
     budget_range: Option | null;
     property_type: Option | null;
     status: Option;

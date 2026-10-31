@@ -1,5 +1,7 @@
 import type { ReactNode } from 'react';
+import { useState } from 'react';
 import InputError from '@/components/input-error';
+import EmergencyNotice from '@/components/job-requests/emergency-notice';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { NativeSelect } from '@/components/ui/native-select';
@@ -35,6 +37,8 @@ export default function JobRequestFields({
     defaults = {},
     mode,
 }: Props) {
+    const [urgency, setUrgency] = useState(defaults.urgency ?? 'flexible');
+
     return (
         <div className={mode === 'create' ? 'space-y-6' : 'space-y-10'}>
             <Fieldset legend="About the job" card={mode === 'create'}>
@@ -103,7 +107,8 @@ export default function JobRequestFields({
                             id="urgency"
                             name="urgency"
                             required
-                            defaultValue={defaults.urgency ?? 'flexible'}
+                            value={urgency}
+                            onChange={(event) => setUrgency(event.target.value)}
                             aria-invalid={!!errors.urgency}
                         >
                             <Options options={options.urgencies} />
@@ -144,6 +149,8 @@ export default function JobRequestFields({
                         </NativeSelect>
                     </Field>
                 </div>
+
+                {urgency === 'emergency' && <EmergencyNotice />}
             </Fieldset>
 
             <Fieldset legend="Location" card={mode === 'create'}>

@@ -1,5 +1,5 @@
 import { Form, Head } from '@inertiajs/react';
-import { Pencil, Trash2 } from 'lucide-react';
+import { Pencil, Phone, Trash2, TriangleAlert } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { useState } from 'react';
 import JobRequestController from '@/actions/App/Http/Controllers/Admin/JobRequestController';
@@ -11,6 +11,7 @@ import ConfirmDeleteDialog from '@/components/confirm-delete-dialog';
 import InputError from '@/components/input-error';
 import JobRequestFields from '@/components/job-requests/job-request-fields';
 import StatusBadge from '@/components/job-requests/status-badge';
+import UrgencyBadge from '@/components/job-requests/urgency-badge';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { NativeSelect } from '@/components/ui/native-select';
@@ -38,6 +39,39 @@ export default function Show({ jobRequest, vendors, options }: Props) {
             <Head title={jobRequest.title} />
 
             <div className="mx-auto w-full max-w-6xl space-y-8 p-4 md:p-6">
+                {jobRequest.open_emergency && (
+                    <div
+                        role="alert"
+                        className="flex flex-wrap items-center gap-x-4 gap-y-2 rounded-lg border border-red-300 bg-red-50 p-4 text-sm text-red-900 dark:border-red-900 dark:bg-red-950 dark:text-red-100"
+                    >
+                        <p className="flex items-center gap-2 font-medium">
+                            <TriangleAlert
+                                className="size-4 shrink-0"
+                                aria-hidden="true"
+                            />
+                            Emergency with no vendor assigned
+                        </p>
+                        {jobRequest.contact_phone ? (
+                            <a
+                                href={`tel:${jobRequest.contact_phone.replace(/[^\d+]/g, '')}`}
+                                className="inline-flex items-center gap-1.5 font-medium underline underline-offset-4"
+                            >
+                                <Phone className="size-4" aria-hidden="true" />
+                                Call {jobRequest.contact_name} on{' '}
+                                {jobRequest.contact_phone}
+                            </a>
+                        ) : (
+                            <a
+                                href={`mailto:${jobRequest.contact_email}`}
+                                className="underline underline-offset-4"
+                            >
+                                No phone number given. Email{' '}
+                                {jobRequest.contact_email}
+                            </a>
+                        )}
+                    </div>
+                )}
+
                 <header className="flex flex-wrap items-start justify-between gap-4">
                     <div className="min-w-0 space-y-2">
                         <div className="flex flex-wrap items-center gap-2">
@@ -45,6 +79,7 @@ export default function Show({ jobRequest, vendors, options }: Props) {
                                 {jobRequest.title}
                             </h1>
                             <StatusBadge status={jobRequest.status} />
+                            <UrgencyBadge urgency={jobRequest.urgency} />
                         </div>
                         <p className="text-sm text-muted-foreground">
                             {jobRequest.category.label} in {jobRequest.suburb} ·

@@ -32,6 +32,12 @@ class DashboardController extends Controller
             ->values();
 
         return Inertia::render('admin/dashboard', [
+            'emergencies' => [
+                'total' => JobRequest::query()->openEmergency()->count(),
+                'items' => JobRequestResource::collection(
+                    JobRequest::query()->openEmergency()->oldest()->limit(self::SECTION_LIMIT)->get()
+                )->resolve($request),
+            ],
             'newRequests' => [
                 'total' => JobRequest::query()->awaitingReview()->count(),
                 'items' => JobRequestResource::collection(

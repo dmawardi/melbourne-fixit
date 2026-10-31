@@ -81,6 +81,16 @@ class JobRequest extends Model
     public const MAX_PHOTOS = 10;
 
     /**
+     * The statuses in which an emergency with no vendor still needs attention.
+     */
+    private const OPEN_STATUSES = [
+        JobRequestStatus::Submitted,
+        JobRequestStatus::Reviewing,
+        JobRequestStatus::Quoted,
+        JobRequestStatus::Scheduled,
+    ];
+
+    /**
      * Get the columns that should receive a unique identifier.
      *
      * @return array<int, string>
@@ -226,6 +236,45 @@ class JobRequest extends Model
     protected function urgentFirst(Builder $query): void
     {
         $query->orderByRaw('CASE WHEN urgency = ? THEN 0 ELSE 1 END', [JobUrgency::Emergency->value]);
+    }
+
+    /**
+     * Scope a query to emergencies that are still open and have no vendor.
+     *
+     * @param  Builder<JobRequest>  $query
+     */
+    #[Scope]
+    protected function openEmergency(Builder $query): void
+    {
+        $query->where('urgency', JobUrgency::Emergency)
+            ->whereNull('vendor_id')
+            ->whereIn('status', self::OPEN_STATUSES);
+    }
+
+    /**
+     * Order a query with open emergencies first.
+     *
+     * @param  Builder<JobRequest>  $query
+     */
+    #[Scope]
+    protected function openEmergenciesFirst(Builder $query): void
+    {
+        $statuses = array_map(fn (JobRequestStatus $status): string => $status->value, self::OPEN_STATUSES);
+
+        $query->orderByRaw(
+            'CASE WHEN urgency = ? AND vendor_id IS NULL AND status IN ('.implode(', ', array_fill(0, count($statuses), '?')).') THEN 0 ELSE 1 END',
+            [JobUrgency::Emergency->value, ...$statuses],
+        );
+    }
+
+    /**
+     * Determine whether this is an emergency that's still open and has no vendor.
+     */
+    public function isOpenEmergency(): bool
+    {
+        return $this->urgency === JobUrgency::Emergency
+            && $this->vendor_id === null
+            && in_array($this->status, self::OPEN_STATUSES, true);
     }
 
     /**

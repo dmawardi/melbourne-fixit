@@ -27,6 +27,7 @@ class JobRequestResource extends JsonResource
             'description' => $this->description,
             'category' => $this->category->toOption(),
             'urgency' => $this->urgency->toOption(),
+            'open_emergency' => $this->isOpenEmergency(),
             'budget_range' => $this->budget_range?->toOption(),
             'property_type' => $this->property_type?->toOption(),
             'status' => $this->status->toOption(),

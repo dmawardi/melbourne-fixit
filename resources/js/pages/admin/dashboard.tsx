@@ -1,11 +1,11 @@
 import { Head, Link } from '@inertiajs/react';
-import { CircleCheck } from 'lucide-react';
+import { CircleCheck, Phone, TriangleAlert } from 'lucide-react';
 import type { ReactNode } from 'react';
 import VendorDocumentIssues from '@/components/admin/vendor-document-issues';
 import VendorDocumentStatus from '@/components/admin/vendor-document-status';
 import StatusBadge from '@/components/job-requests/status-badge';
-import { Badge } from '@/components/ui/badge';
-import { formatDate } from '@/lib/format';
+import UrgencyBadge from '@/components/job-requests/urgency-badge';
+import { formatDate, formatDateTime } from '@/lib/format';
 import { index as dashboard } from '@/routes/admin';
 import { index as requests, show } from '@/routes/admin/job-requests';
 import { edit, index as vendors } from '@/routes/admin/vendors';
@@ -17,6 +17,7 @@ type RequestSection = {
 };
 
 type Props = {
+    emergencies: RequestSection;
     newRequests: RequestSection;
     unassignedRequests: RequestSection;
     vendorDocuments: {
@@ -27,6 +28,7 @@ type Props = {
 };
 
 export default function Dashboard({
+    emergencies,
     newRequests,
     unassignedRequests,
     vendorDocuments,
@@ -47,6 +49,73 @@ export default function Dashboard({
                         What needs your attention, most urgent first.
                     </p>
                 </div>
+
+                {emergencies.total > 0 && (
+                    <section
+                        aria-labelledby="emergencies-heading"
+                        className="rounded-xl border border-red-300 bg-red-50 p-4 dark:border-red-900 dark:bg-red-950"
+                    >
+                        <div className="flex flex-wrap items-center justify-between gap-2">
+                            <h2
+                                id="emergencies-heading"
+                                className="flex items-center gap-2 font-medium text-red-900 dark:text-red-100"
+                            >
+                                <TriangleAlert
+                                    className="size-4"
+                                    aria-hidden="true"
+                                />
+                                Emergencies with no vendor ({emergencies.total})
+                            </h2>
+                            <Link
+                                href={requests({
+                                    query: { urgency: 'emergency' },
+                                })}
+                                className="text-sm font-medium text-red-900 underline underline-offset-4 dark:text-red-100"
+                            >
+                                View all
+                            </Link>
+                        </div>
+                        <ul className="mt-3 divide-y divide-red-200 dark:divide-red-900">
+                            {emergencies.items.map((jobRequest) => (
+                                <li
+                                    key={jobRequest.id}
+                                    className="flex flex-wrap items-center justify-between gap-2 py-3 last:pb-0"
+                                >
+                                    <div className="min-w-0">
+                                        <Link
+                                            href={show(jobRequest.id)}
+                                            className="font-medium break-words hover:underline"
+                                        >
+                                            {jobRequest.title}
+                                        </Link>
+                                        <p className="text-sm text-muted-foreground">
+                                            {jobRequest.suburb} · Submitted{' '}
+                                            {formatDateTime(
+                                                jobRequest.created_at,
+                                            )}
+                                        </p>
+                                    </div>
+                                    {jobRequest.contact_phone ? (
+                                        <a
+                                            href={`tel:${jobRequest.contact_phone.replace(/[^\d+]/g, '')}`}
+                                            className="inline-flex items-center gap-1.5 text-sm font-medium"
+                                        >
+                                            <Phone
+                                                className="size-4"
+                                                aria-hidden="true"
+                                            />
+                                            {jobRequest.contact_phone}
+                                        </a>
+                                    ) : (
+                                        <span className="text-sm text-muted-foreground">
+                                            No phone number given
+                                        </span>
+                                    )}
+                                </li>
+                            ))}
+                        </ul>
+                    </section>
+                )}
 
                 <div className="grid gap-4 sm:grid-cols-3">
                     <SummaryCard
@@ -226,9 +295,7 @@ function RequestRow({ jobRequest }: { jobRequest: AdminJobRequest }) {
                 </p>
             </div>
             <div className="flex flex-wrap items-center gap-2">
-                {jobRequest.urgency.value === 'emergency' && (
-                    <Badge variant="destructive">Emergency</Badge>
-                )}
+                <UrgencyBadge urgency={jobRequest.urgency} />
                 <StatusBadge status={jobRequest.status} />
             </div>
         </li>

@@ -131,4 +131,53 @@ class DashboardTest extends TestCase
                 ->where('jobRequests.data.0.title', 'Assigned')
             );
     }
+
+    public function test_open_emergencies_with_no_vendor_are_highlighted()
+    {
+        $emergency = ['urgency' => JobUrgency::Emergency];
+
+        $this->request('Oldest', JobRequestStatus::Reviewing, [...$emergency, 'created_at' => now()->subDay()]);
+        $this->request('Newest', JobRequestStatus::Submitted, $emergency);
+        $this->request('Completed', JobRequestStatus::Completed, $emergency);
+        $this->request('Deleted', JobRequestStatus::Submitted, $emergency)->delete();
+        $this->request('Assigned', JobRequestStatus::Submitted, $emergency)->assignVendor(Vendor::factory()->create());
+        $this->request('Not urgent', JobRequestStatus::Submitted, ['urgency' => JobUrgency::Flexible]);
+
+        $this->actingAs($this->admin)
+            ->get(route('admin.index'))
+            ->assertInertia(fn ($page) => $page
+                ->where('emergencies.total', 2)
+                ->where('emergencies.items.0.title', 'Oldest')
+                ->where('emergencies.items.1.title', 'Newest')
+                ->where('emergencyCount', 2)
+            );
+    }
+
+    public function test_the_emergency_count_is_only_worked_out_for_admins()
+    {
+        $this->request('Emergency', JobRequestStatus::Submitted, ['urgency' => JobUrgency::Emergency]);
+
+        $this->actingAs(User::factory()->create())
+            ->get(route('job-requests.index'))
+            ->assertInertia(fn ($page) => $page->where('emergencyCount', 0));
+    }
+
+    public function test_the_request_list_puts_open_emergencies_first_and_filters_by_urgency()
+    {
+        $this->request('Recent', JobRequestStatus::Submitted, ['urgency' => JobUrgency::Flexible, 'last_activity_at' => now()]);
+        $this->request('Closed emergency', JobRequestStatus::Completed, ['urgency' => JobUrgency::Emergency, 'last_activity_at' => now()->subDay()]);
+        $this->request('Open emergency', JobRequestStatus::Submitted, ['urgency' => JobUrgency::Emergency, 'last_activity_at' => now()->subWeek()]);
+
+        $this->actingAs($this->admin)
+            ->get(route('admin.job-requests.index'))
+            ->assertInertia(fn ($page) => $page
+                ->where('jobRequests.data.0.title', 'Open emergency')
+                ->where('jobRequests.data.1.title', 'Recent')
+                ->where('jobRequests.data.2.title', 'Closed emergency')
+            );
+
+        $this->actingAs($this->admin)
+            ->get(route('admin.job-requests.index', ['urgency' => 'emergency']))
+            ->assertInertia(fn ($page) => $page->has('jobRequests.data', 2));
+    }
 }

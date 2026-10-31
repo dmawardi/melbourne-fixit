@@ -1,11 +1,18 @@
 import { Head, Link, usePage } from '@inertiajs/react';
 import { CircleCheck } from 'lucide-react';
+import EmergencyNotice from '@/components/job-requests/emergency-notice';
 import { Button } from '@/components/ui/button';
 import { home, login, register } from '@/routes';
 import { index } from '@/routes/job-requests';
 
-export default function Submitted({ email }: { email: string }) {
-    const { auth } = usePage().props;
+export default function Submitted({
+    email,
+    emergency,
+}: {
+    email: string;
+    emergency: boolean;
+}) {
+    const { auth, site } = usePage().props;
 
     return (
         <>
@@ -21,7 +28,27 @@ export default function Submitted({ email }: { email: string }) {
                 </h1>
                 <p className="mt-4 text-muted-foreground">
                     We'll review the details and get back to you with a quote.
+                    We've emailed a confirmation to{' '}
+                    <span className="break-words">{email}</span>.
                 </p>
+                {!emergency && site.phone && (
+                    <p className="mt-2 text-muted-foreground">
+                        Need us in a hurry? Call{' '}
+                        <a
+                            href={`tel:${site.phone.replace(/[^\d+]/g, '')}`}
+                            className="font-medium text-foreground underline underline-offset-4"
+                        >
+                            {site.phone}
+                        </a>
+                        .
+                    </p>
+                )}
+
+                {emergency && (
+                    <div className="mt-8 text-left">
+                        <EmergencyNotice />
+                    </div>
+                )}
 
                 <div className="mt-8 rounded-xl border bg-muted/40 p-6 text-left">
                     <h2 className="font-medium">Next: add photos</h2>

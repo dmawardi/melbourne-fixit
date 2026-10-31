@@ -6,6 +6,8 @@ use Database\Factories\UserFactory;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
+use Illuminate\Database\Eloquent\Attributes\Scope;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
@@ -49,6 +51,17 @@ class User extends Authenticatable implements MustVerifyEmail, PasskeyUser
             'is_admin' => 'boolean',
             'two_factor_confirmed_at' => 'datetime',
         ];
+    }
+
+    /**
+     * Scope a query to admins.
+     *
+     * @param  Builder<User>  $query
+     */
+    #[Scope]
+    protected function admins(Builder $query): void
+    {
+        $query->where('is_admin', true);
     }
 
     /**

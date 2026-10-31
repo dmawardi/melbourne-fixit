@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Models\JobRequest;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
 
@@ -44,11 +45,15 @@ class HandleInertiaRequests extends Middleware
                 'phone' => config('business.phone'),
                 'email' => config('business.email'),
                 'abn' => config('business.abn'),
+                'emergencyResponse' => config('business.emergency_response'),
             ],
             'auth' => [
                 'user' => $request->user(),
                 'isAdmin' => $request->user()?->isAdmin() ?? false,
             ],
+            'emergencyCount' => fn (): int => $request->user()?->isAdmin()
+                ? JobRequest::query()->openEmergency()->count()
+                : 0,
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
         ];
     }

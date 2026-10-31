@@ -3,6 +3,7 @@ import { ClipboardList } from 'lucide-react';
 import JobRequestController from '@/actions/App/Http/Controllers/Admin/JobRequestController';
 import Heading from '@/components/heading';
 import StatusBadge from '@/components/job-requests/status-badge';
+import UrgencyBadge from '@/components/job-requests/urgency-badge';
 import Pagination from '@/components/pagination';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -18,12 +19,14 @@ type Props = {
         search: string;
         status: string | null;
         category: string | null;
+        urgency: string | null;
         claimed: string | null;
         vendor: string | null;
     };
     options: {
         statuses: Option[];
         categories: Option[];
+        urgencies: Option[];
     };
 };
 
@@ -40,7 +43,8 @@ export default function Index({ jobRequests, filters, options }: Props) {
                         Requests
                     </h1>
                     <p className="text-sm text-muted-foreground">
-                        All job requests, most recently active first.
+                        All job requests. Open emergencies come first, then the
+                        most recently active.
                     </p>
                 </div>
 
@@ -69,6 +73,12 @@ export default function Index({ jobRequests, filters, options }: Props) {
                         label="Type of job"
                         options={options.categories}
                         value={filters.category}
+                    />
+                    <FilterSelect
+                        id="urgency"
+                        label="How soon"
+                        options={options.urgencies}
+                        value={filters.urgency}
                     />
                     <FilterSelect
                         id="claimed"
@@ -135,9 +145,14 @@ export default function Index({ jobRequests, filters, options }: Props) {
                                             </p>
                                         </td>
                                         <td className="p-3">
-                                            <StatusBadge
-                                                status={jobRequest.status}
-                                            />
+                                            <div className="flex flex-wrap gap-1">
+                                                <StatusBadge
+                                                    status={jobRequest.status}
+                                                />
+                                                <UrgencyBadge
+                                                    urgency={jobRequest.urgency}
+                                                />
+                                            </div>
                                         </td>
                                         <td className="p-3">
                                             {jobRequest.vendor?.name ?? (
