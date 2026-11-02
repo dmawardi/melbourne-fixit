@@ -117,6 +117,7 @@ Public pages are server-rendered (Inertia SSR), so search engines and AI crawler
 3. Build and run the SSR server (see [Deploying the SSR server](#deploying-the-ssr-server)).
 4. Check the service areas in `config/business.php`.
 5. Submit `https://your-domain/sitemap.xml` in Google Search Console and Bing Webmaster Tools.
+6. Set up Google Analytics and publish a privacy page (see [Analytics](#analytics)).
 
 ### Business details
 
@@ -147,6 +148,41 @@ Admins are emailed about every new request, and customers get a confirmation. Th
 - **`BUSINESS_PHONE`,** which customers are told to call if they need help in a hurry.
 
 The response time customers are told to expect for emergencies is `emergency_response` in `config/business.php`.
+
+### Analytics
+
+The public pages use Google Analytics (GA4). Nothing loads unless `GOOGLE_ANALYTICS_ID` is set, so leave it empty outside production.
+
+**To set it up:**
+
+1. Create a GA4 property and web stream, then set the measurement ID in `.env`:
+
+    ```dotenv
+    GOOGLE_ANALYTICS_ID=G-XXXXXXXXXX
+    ```
+
+2. **Turn off Enhanced Measurement on the web stream.** This is required: its automatic page tracking skips our URL cleaning, which can send email addresses to Google and double count page views.
+3. Mark `generate_lead`, `phone_click` and `email_click` as key events.
+4. Publish a privacy page that discloses the use of Google Analytics, which Google's terms require. The site doesn't have one yet.
+
+**Check it's working** with GA DebugView and the browser's Network tab:
+
+- There's one page view on first load, and one for each move between public pages.
+- `generate_lead` fires after a test request.
+- Going from the submitted page to register sends no page view, and no request to Google contains the email address.
+
+**What's tracked:**
+
+| Event           | Sent when                                                           |
+| --------------- | ------------------------------------------------------------------- |
+| `page_view`     | A public page is viewed                                             |
+| `generate_lead` | The submitted page is reached, with an `emergency` true/false value |
+| `phone_click`   | A `tel:` link is clicked on a public page                           |
+| `email_click`   | A `mailto:` link is clicked on a public page                        |
+
+Page URLs can contain personal data (such as `/register?email=...`), so `resources/js/lib/analytics.ts` sends page views itself and strips every query param except `utm_*` and `gclid`. Login, account and admin pages aren't tracked. `generate_lead` can fire again if someone reloads the submitted page, so use the admin area for exact request numbers.
+
+To track a new public page, add it to `PUBLIC_PAGES` in `analytics.ts` and to the list in `resources/views/app.blade.php`.
 
 ### Deploying the SSR server
 

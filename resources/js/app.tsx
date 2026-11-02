@@ -6,11 +6,12 @@ import AppLayout from '@/layouts/app-layout';
 import AuthLayout from '@/layouts/auth-layout';
 import PublicLayout from '@/layouts/public-layout';
 import SettingsLayout from '@/layouts/settings/layout';
+import { initializeAnalytics, PUBLIC_PAGES } from '@/lib/analytics';
 
 const appName = import.meta.env.VITE_APP_NAME || 'Laravel';
 
-// Pages anyone can visit, shown with the marketing site's header and footer.
-const PUBLIC_PAGES = ['home', 'job-requests/create', 'job-requests/submitted'];
+// Registered before the app boots so the initial page view isn't missed.
+initializeAnalytics();
 
 void createInertiaApp({
     title: (title) => (title ? `${title} - ${appName}` : appName),

@@ -38,6 +38,17 @@
         <link rel="icon" href="/favicon.svg" type="image/svg+xml">
         <link rel="apple-touch-icon" href="/apple-touch-icon.png">
 
+        {{-- Page views are sent from resources/js/lib/analytics.ts with personal data stripped from the URL --}}
+        @if (config('services.google_analytics.measurement_id') && in_array($page['component'], ['home', 'job-requests/create', 'job-requests/submitted']))
+            <script async src="https://www.googletagmanager.com/gtag/js?id={{ config('services.google_analytics.measurement_id') }}"></script>
+            <script>
+                window.dataLayer = window.dataLayer || [];
+                function gtag() { dataLayer.push(arguments); }
+                gtag('js', new Date());
+                gtag('config', @json(config('services.google_analytics.measurement_id')), { send_page_view: false });
+            </script>
+        @endif
+
         @fonts
 
         @viteReactRefresh
