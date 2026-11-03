@@ -1,18 +1,21 @@
-import { usePage } from '@inertiajs/react';
-
-import AppLogoIcon from '@/components/app-logo-icon';
-
 export default function AppLogo() {
-    const { name } = usePage().props;
-
     return (
         <>
-            <div className="flex aspect-square size-8 items-center justify-center rounded-md bg-cta text-white">
-                <AppLogoIcon className="size-5 fill-current" />
-            </div>
-            <div className="ml-1 grid flex-1 text-left text-sm">
-                <span className="mb-0.5 truncate leading-tight font-semibold">
-                    {name}
+            <img
+                src="/images/logo.webp"
+                alt=""
+                width={256}
+                height={256}
+                className="aspect-square size-8 shrink-0 rounded-md"
+            />
+            <div className="ml-1.5 grid flex-1 text-left">
+                <span className="truncate font-brand text-xl leading-none font-extrabold">
+                    <span className="text-navy dark:text-foreground">My </span>
+                    <span className="text-cta">Reno</span>
+                    <span className="text-navy dark:text-foreground">
+                        {' '}
+                        Mate
+                    </span>
                 </span>
             </div>
         </>
