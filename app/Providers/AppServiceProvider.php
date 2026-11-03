@@ -75,7 +75,9 @@ class AppServiceProvider extends ServiceProvider
 
         // Generate every URL (canonicals, sitemap, emails) from APP_URL rather than the
         // request's Host header, so a spoofed host can't leak into cached pages or the sitemap.
-        if (app()->isProduction()) {
+        // Console commands already use APP_URL, and forcing it there would make Wayfinder
+        // write absolute URLs into the front-end build, tying it to one domain.
+        if (app()->isProduction() && ! app()->runningInConsole()) {
             URL::forceRootUrl(config('app.url'));
 
             if (str_starts_with((string) config('app.url'), 'https://')) {
