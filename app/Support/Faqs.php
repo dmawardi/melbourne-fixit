@@ -16,6 +16,10 @@ class Faqs
     {
         return [
             [
+                'question' => 'Who is '.config('business.name').'?',
+                'answer' => config('business.name').' is a Melbourne business that looks after home maintenance, repairs and renovations. Tell us about the job and we\'ll match it with a vetted, insured local tradie and send you a quote.',
+            ],
+            [
                 'question' => 'How does it work?',
                 'answer' => 'Fill in the quote request form with a few details about the job. We review it, match it with the right tradesperson and send you a quote. Once you log in, you can add photos and follow updates on your request.',
             ],

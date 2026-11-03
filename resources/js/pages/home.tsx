@@ -53,7 +53,7 @@ const steps = [
 ];
 
 const trustPoints = [
-    'Vetted tradespeople',
+    'Vetted local tradies',
     'Fully insured',
     'Licensed where required',
 ];
@@ -130,9 +130,9 @@ export default function Home({
                         </h1>
                         <p className="mt-6 max-w-2xl text-lg text-muted-foreground">
                             From a leaking tap to a new bathroom, tell us what
-                            needs doing and we'll match the job with a vetted,
-                            insured local tradesperson, licensed where the work
-                            requires it, and send you a quote.
+                            needs doing and we'll find you a vetted, insured
+                            local tradie, licensed where the work requires it,
+                            and send you a quote.
                         </p>
                         <div className="mt-8 flex flex-wrap gap-3">
                             <Button variant="cta" size="lg" asChild>
