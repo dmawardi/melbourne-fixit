@@ -35,7 +35,7 @@
         <meta property="og:locale" content="en_AU">
 
         <link rel="icon" href="/favicon.ico" sizes="any">
-        <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+        <link rel="icon" href="/favicon-96x96.png" type="image/png" sizes="96x96">
         <link rel="apple-touch-icon" href="/apple-touch-icon.png">
 
         {{-- Page views are sent from resources/js/lib/analytics.ts with personal data stripped from the URL --}}

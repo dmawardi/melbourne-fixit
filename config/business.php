@@ -13,7 +13,7 @@ return [
     |
     */
 
-    'name' => env('APP_NAME', 'Melbourne Fixit'),
+    'name' => env('APP_NAME', 'My Reno Mate'),
 
     'description' => 'Home maintenance, repairs and renovations across Melbourne. Tell us about the job and we\'ll match it with a vetted, insured local tradesperson, licensed where the work requires it, and send you a quote.',
 

@@ -1,4 +1,4 @@
-# Melbourne Fixit
+# My Reno Mate
 
 A website for collecting home maintenance and renovation job requests in Melbourne, Australia.
 
@@ -125,9 +125,9 @@ These appear in the site footer, the structured data and `llms.txt`. Leave a val
 
 ```dotenv
 BUSINESS_PHONE="03 9123 4567"
-BUSINESS_EMAIL=hello@melbournefixit.com.au
+BUSINESS_EMAIL=hello@myrenomate.com.au
 BUSINESS_ABN="12 345 678 901"
-BUSINESS_SAME_AS="https://www.facebook.com/melbournefixit,https://www.instagram.com/melbournefixit"
+BUSINESS_SAME_AS="https://www.facebook.com/myrenomate,https://www.instagram.com/myrenomate"
 ```
 
 `BUSINESS_SAME_AS` is a comma-separated list, with no spaces, of the business's official profiles on other websites. It becomes `sameAs` in the structured data, which tells Google and AI assistants that those profiles belong to this business. Good candidates:
