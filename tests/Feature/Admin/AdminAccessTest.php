@@ -7,6 +7,7 @@ use App\Models\JobRequestFile;
 use App\Models\JobRequestMessage;
 use App\Models\User;
 use App\Models\Vendor;
+use App\Models\VendorFile;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\TestCase;
@@ -39,6 +40,8 @@ class AdminAccessTest extends TestCase
             'vendors.edit' => ['get', 'admin.vendors.edit'],
             'vendors.update' => ['put', 'admin.vendors.update'],
             'vendors.destroy' => ['delete', 'admin.vendors.destroy'],
+            'vendors.files.store' => ['post', 'admin.vendors.files.store'],
+            'vendors.files.destroy' => ['delete', 'admin.vendors.files.destroy'],
         ];
     }
 
@@ -49,6 +52,8 @@ class AdminAccessTest extends TestCase
         $message = JobRequestMessage::factory()->for($jobRequest)->create();
 
         return route($route, match (true) {
+            $route === 'admin.vendors.files.store' => [Vendor::factory()->create()],
+            $route === 'admin.vendors.files.destroy' => [($vendorFile = VendorFile::factory()->create())->vendor_id, $vendorFile],
             str_contains($route, 'files.store'), str_contains($route, 'messages.store') => [$jobRequest],
             str_contains($route, 'files.') => [$jobRequest, $file],
             str_contains($route, 'messages.') => [$jobRequest, $message],

@@ -117,6 +117,18 @@ export type Vendor = {
     archived: boolean;
 };
 
+export type VendorFile = {
+    id: number;
+    url: string;
+    // A VendorDocument value, or null for other files.
+    document: string | null;
+    original_name: string | null;
+    mime_type: string | null;
+    size: number | null;
+    uploader?: string | null;
+    created_at: string | null;
+};
+
 export type VendorChoice = {
     id: number;
     name: string;

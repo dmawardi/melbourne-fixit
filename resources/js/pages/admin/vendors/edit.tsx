@@ -1,15 +1,18 @@
 import { Head } from '@inertiajs/react';
 import VendorController from '@/actions/App/Http/Controllers/Admin/VendorController';
+import VendorFiles from '@/components/admin/vendor-files';
 import VendorForm from '@/components/admin/vendor-form';
 import { edit, index } from '@/routes/admin/vendors';
-import type { Vendor, VendorOptions } from '@/types';
+import type { Option, Vendor, VendorFile, VendorOptions } from '@/types';
 
 type Props = {
     vendor: Vendor;
     options: VendorOptions;
+    files: VendorFile[];
+    fileDocuments: Option[];
 };
 
-export default function Edit({ vendor, options }: Props) {
+export default function Edit({ vendor, options, files, fileDocuments }: Props) {
     return (
         <>
             <Head title={`Edit ${vendor.name}`} />
@@ -23,6 +26,12 @@ export default function Edit({ vendor, options }: Props) {
                     options={options}
                     vendor={vendor}
                     submitLabel="Save changes"
+                />
+                <VendorFiles
+                    vendor={vendor}
+                    files={files}
+                    documents={fileDocuments}
+                    options={options}
                 />
             </div>
         </>

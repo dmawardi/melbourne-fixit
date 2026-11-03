@@ -125,6 +125,16 @@ class Vendor extends Model
     }
 
     /**
+     * Get the copies of the vendor's documents, newest first.
+     *
+     * @return HasMany<VendorFile, $this>
+     */
+    public function files(): HasMany
+    {
+        return $this->hasMany(VendorFile::class)->latest('id');
+    }
+
+    /**
      * Determine whether the vendor takes jobs in the given category.
      */
     public function canHandle(JobCategory $category): bool

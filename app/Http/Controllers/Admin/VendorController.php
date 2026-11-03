@@ -9,6 +9,7 @@ use App\Enums\VendorType;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\StoreVendorRequest;
 use App\Http\Requests\Admin\UpdateVendorRequest;
+use App\Http\Resources\Admin\VendorFileResource;
 use App\Http\Resources\Admin\VendorResource;
 use App\Models\Vendor;
 use Illuminate\Http\RedirectResponse;
@@ -92,9 +93,14 @@ class VendorController extends Controller
      */
     public function edit(Request $request, Vendor $vendor): Response
     {
+        $vendor->load('files.uploader');
+
         return Inertia::render('admin/vendors/edit', [
             'vendor' => (new VendorResource($vendor))->resolve($request),
             'options' => $this->options(),
+            'files' => VendorFileResource::collection($vendor->files)->resolve($request),
+            // The documents to collect for the vendor's job types, as saved rather than as edited in the form.
+            'fileDocuments' => array_map(fn (VendorDocument $document): array => $document->toOption(), $vendor->applicableDocuments()),
         ]);
     }
 

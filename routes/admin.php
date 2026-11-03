@@ -6,6 +6,7 @@ use App\Http\Controllers\Admin\JobRequestFileController;
 use App\Http\Controllers\Admin\JobRequestMessageController;
 use App\Http\Controllers\Admin\JobRequestVendorController;
 use App\Http\Controllers\Admin\VendorController;
+use App\Http\Controllers\Admin\VendorFileController;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware(['auth', 'verified', 'can:admin'])
@@ -38,5 +39,10 @@ Route::middleware(['auth', 'verified', 'can:admin'])
                 ->name('job-requests.messages.store');
             Route::delete('requests/{jobRequest}/messages/{message}', [JobRequestMessageController::class, 'destroy'])
                 ->name('job-requests.messages.destroy');
+
+            Route::post('vendors/{vendor}/files', [VendorFileController::class, 'store'])
+                ->name('vendors.files.store');
+            Route::delete('vendors/{vendor}/files/{file}', [VendorFileController::class, 'destroy'])
+                ->name('vendors.files.destroy');
         });
     });

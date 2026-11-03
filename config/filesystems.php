@@ -30,6 +30,19 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Vendor Documents Disk
+    |--------------------------------------------------------------------------
+    |
+    | The disk copies of vendor licences and insurance certificates are
+    | stored on. They're private like job photos, so the same advice
+    | applies: "s3" in production and "local" in development.
+    |
+    */
+
+    'vendor_documents' => env('VENDOR_DOCUMENTS_DISK', 's3'),
+
+    /*
+    |--------------------------------------------------------------------------
     | Filesystem Disks
     |--------------------------------------------------------------------------
     |

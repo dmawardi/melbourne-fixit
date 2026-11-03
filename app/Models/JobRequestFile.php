@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Enums\ActivityEvent;
 use App\Enums\FileKind;
 use App\Enums\Visibility;
+use App\Models\Concerns\StoredPrivately;
 use App\Models\Concerns\TracksChanges;
 use Carbon\CarbonImmutable;
 use Database\Factories\JobRequestFileFactory;
@@ -15,7 +16,6 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Support\Facades\Storage;
 
 /**
  * @property int $id
@@ -54,12 +54,7 @@ use Illuminate\Support\Facades\Storage;
 class JobRequestFile extends Model
 {
     /** @use HasFactory<JobRequestFileFactory> */
-    use HasFactory, TracksChanges;
-
-    /**
-     * How long signed file URLs remain valid, in minutes.
-     */
-    public const URL_TTL_MINUTES = 30;
+    use HasFactory, StoredPrivately, TracksChanges;
 
     /**
      * Get the attributes that should be cast.
@@ -77,16 +72,6 @@ class JobRequestFile extends Model
             'sort_order' => 'integer',
             'uploaded_at' => 'datetime',
         ];
-    }
-
-    /**
-     * Bootstrap the model and its traits.
-     */
-    protected static function booted(): void
-    {
-        static::deleted(function (JobRequestFile $file): void {
-            Storage::disk($file->disk)->delete($file->path);
-        });
     }
 
     /**
@@ -118,14 +103,6 @@ class JobRequestFile extends Model
     protected function shared(Builder $query): void
     {
         $query->where('visibility', Visibility::Customer);
-    }
-
-    /**
-     * Determine if the file is an image that can be shown inline.
-     */
-    public function isImage(): bool
-    {
-        return str_starts_with((string) $this->mime_type, 'image/');
     }
 
     /**
@@ -163,28 +140,6 @@ class JobRequestFile extends Model
             ActivityEvent::FileUpdated,
             [...$this->activityProperties(), 'changes' => $changes],
             $by,
-        );
-    }
-
-    /**
-     * Get a short-lived signed URL for the file.
-     *
-     * Files are stored privately, so every URL is signed and expires. Non-images are
-     * served as downloads under their original filename.
-     */
-    public function temporaryUrl(): string
-    {
-        $options = [];
-
-        if (! $this->isImage() && $this->original_name !== null) {
-            $filename = str_replace(['"', '\\'], '', $this->original_name);
-            $options['ResponseContentDisposition'] = 'attachment; filename="'.$filename.'"';
-        }
-
-        return Storage::disk($this->disk)->temporaryUrl(
-            $this->path,
-            now()->addMinutes(self::URL_TTL_MINUTES),
-            $options,
         );
     }
 }
