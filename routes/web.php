@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Auth\AccountSetupController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\SeoController;
 use Illuminate\Support\Facades\Route;
@@ -14,6 +15,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // Customers land on their requests; kept for links to the starter kit's dashboard.
     Route::redirect('dashboard', 'requests')->name('dashboard');
 });
+
+// Set-password link emailed to customers whose account an admin created.
+Route::get('account/setup/{user}', AccountSetupController::class)
+    ->middleware(['guest', 'signed', 'throttle:6,1'])
+    ->name('account.setup');
 
 require __DIR__.'/admin.php';
 require __DIR__.'/job-requests.php';

@@ -29,6 +29,10 @@ type Props = {
     defaults?: JobRequestDefaults;
     // The public form asks for an email but not a street address; editing is the reverse.
     mode: 'create' | 'edit';
+    // Admins logging a request for a customer need the street address as well as the email.
+    showAddress?: boolean;
+    contactLegend?: string;
+    emailHint?: string;
 };
 
 export default function JobRequestFields({
@@ -36,6 +40,9 @@ export default function JobRequestFields({
     errors,
     defaults = {},
     mode,
+    showAddress = mode === 'edit',
+    contactLegend = 'Your contact details',
+    emailHint = 'Use this email to log in and see your request.',
 }: Props) {
     const [urgency, setUrgency] = useState(defaults.urgency ?? 'flexible');
 
@@ -154,7 +161,7 @@ export default function JobRequestFields({
             </Fieldset>
 
             <Fieldset legend="Location" card={mode === 'create'}>
-                {mode === 'edit' && (
+                {showAddress && (
                     <Field
                         id="address_line"
                         label="Street address"
@@ -208,7 +215,7 @@ export default function JobRequestFields({
                 </div>
             </Fieldset>
 
-            <Fieldset legend="Your contact details" card={mode === 'create'}>
+            <Fieldset legend={contactLegend} card={mode === 'create'}>
                 <Field
                     id="contact_name"
                     label="Name"
@@ -230,7 +237,7 @@ export default function JobRequestFields({
                         <Field
                             id="contact_email"
                             label="Email"
-                            hint="Use this email to log in and see your request."
+                            hint={emailHint}
                             error={errors.contact_email}
                         >
                             <Input

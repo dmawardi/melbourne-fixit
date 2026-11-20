@@ -1,5 +1,5 @@
 import { Form, Head, Link } from '@inertiajs/react';
-import { ClipboardList } from 'lucide-react';
+import { ClipboardList, Plus } from 'lucide-react';
 import JobRequestController from '@/actions/App/Http/Controllers/Admin/JobRequestController';
 import Heading from '@/components/heading';
 import StatusBadge from '@/components/job-requests/status-badge';
@@ -10,7 +10,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { NativeSelect } from '@/components/ui/native-select';
 import { formatDateTime } from '@/lib/format';
-import { index, show } from '@/routes/admin/job-requests';
+import { create, index, show } from '@/routes/admin/job-requests';
 import type { AdminJobRequest, Option, Paginated } from '@/types';
 
 type Props = {
@@ -38,14 +38,22 @@ export default function Index({ jobRequests, filters, options }: Props) {
             <Head title="Requests" />
 
             <div className="mx-auto w-full max-w-6xl space-y-6 p-4 md:p-6">
-                <div>
-                    <h1 className="text-xl font-semibold tracking-tight">
-                        Requests
-                    </h1>
-                    <p className="text-sm text-muted-foreground">
-                        All job requests. Open emergencies come first, then the
-                        most recently active.
-                    </p>
+                <div className="flex flex-wrap items-start justify-between gap-3">
+                    <div>
+                        <h1 className="text-xl font-semibold tracking-tight">
+                            Requests
+                        </h1>
+                        <p className="text-sm text-muted-foreground">
+                            All job requests. Open emergencies come first, then
+                            the most recently active.
+                        </p>
+                    </div>
+                    <Button asChild>
+                        <Link href={create()}>
+                            <Plus aria-hidden="true" />
+                            New request
+                        </Link>
+                    </Button>
                 </div>
 
                 <Form

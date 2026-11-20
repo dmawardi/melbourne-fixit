@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Actions\JobRequests\CreateJobRequestForCustomer;
 use App\Enums\ActivityEvent;
 use App\Enums\FileKind;
 use App\Enums\JobCategory;
@@ -10,6 +11,7 @@ use App\Enums\JobUrgency;
 use App\Enums\Visibility;
 use App\Http\Controllers\Concerns\ProvidesJobRequestOptions;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Admin\StoreJobRequestRequest;
 use App\Http\Requests\Admin\UpdateJobRequestRequest;
 use App\Http\Resources\Admin\JobRequestResource;
 use App\Models\JobRequest;
@@ -79,6 +81,34 @@ class JobRequestController extends Controller
                 'urgencies' => JobUrgency::options(),
             ],
         ]);
+    }
+
+    /**
+     * Show the form for logging a request on a customer's behalf.
+     */
+    public function create(): Response
+    {
+        return Inertia::render('admin/job-requests/create', [
+            'options' => [
+                ...$this->jobRequestOptions(),
+                'statuses' => JobRequestStatus::options(),
+            ],
+        ]);
+    }
+
+    /**
+     * Store a request logged on a customer's behalf, creating their account if needed.
+     */
+    public function store(StoreJobRequestRequest $request, CreateJobRequestForCustomer $createJobRequest): RedirectResponse
+    {
+        [$jobRequest, $accountCreated] = $createJobRequest->handle($request->validated(), $request->user());
+
+        Inertia::flash('toast', ['type' => 'success', 'message' => $accountCreated
+            ? __('Request created. We created an account for the customer and emailed them.')
+            : __('Request created and added to the customer\'s account. We emailed them.'),
+        ]);
+
+        return to_route('admin.job-requests.show', $jobRequest);
     }
 
     /**

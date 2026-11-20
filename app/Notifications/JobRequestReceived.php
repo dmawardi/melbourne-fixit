@@ -12,6 +12,9 @@ use Illuminate\Notifications\Notification;
 /**
  * Confirms a request to the customer. The form accepts any email address, so this deliberately
  * contains nothing the sender typed, which stops it being used to message a stranger.
+ *
+ * Requests an admin logs for a customer get slightly different wording, since the customer didn't
+ * fill in the form themselves and already has an account.
  */
 class JobRequestReceived extends Notification implements ShouldQueue
 {
@@ -20,6 +23,7 @@ class JobRequestReceived extends Notification implements ShouldQueue
     public function __construct(
         public JobCategory $category,
         public JobUrgency $urgency,
+        public bool $createdByAdmin = false,
     ) {}
 
     /**
@@ -43,7 +47,9 @@ class JobRequestReceived extends Notification implements ShouldQueue
         $mail = (new MailMessage)
             ->subject($emergency ? "We've received your emergency request" : "We've received your request")
             ->greeting('Hello,')
-            ->line("Thanks, we've received your ".mb_strtolower($this->category->label()).' request.');
+            ->line($this->createdByAdmin
+                ? "We've logged your ".mb_strtolower($this->category->label()).' request.'
+                : "Thanks, we've received your ".mb_strtolower($this->category->label()).' request.');
 
         if ($emergency) {
             $mail->line(config('business.emergency_response'))
@@ -54,6 +60,13 @@ class JobRequestReceived extends Notification implements ShouldQueue
 
         if ($phone) {
             $mail->line("Need us in a hurry? Call {$phone}.");
+        }
+
+        if ($this->createdByAdmin) {
+            return $mail
+                ->line('Log in to add photos and follow updates.')
+                ->action('Log in', route('login'))
+                ->line("If you weren't expecting this, please contact us.");
         }
 
         return $mail

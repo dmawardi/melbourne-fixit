@@ -24,6 +24,8 @@ class AdminAccessTest extends TestCase
         return [
             'dashboard' => ['get', 'admin.index'],
             'index' => ['get', 'admin.job-requests.index'],
+            'create' => ['get', 'admin.job-requests.create'],
+            'store' => ['post', 'admin.job-requests.store'],
             'show' => ['get', 'admin.job-requests.show'],
             'update' => ['patch', 'admin.job-requests.update'],
             'destroy' => ['delete', 'admin.job-requests.destroy'],
@@ -59,7 +61,7 @@ class AdminAccessTest extends TestCase
             str_contains($route, 'messages.') => [$jobRequest, $message],
             in_array($route, ['admin.vendors.index', 'admin.vendors.create', 'admin.vendors.store'], true) => [],
             str_contains($route, 'admin.vendors.') => [Vendor::factory()->create()],
-            in_array($route, ['admin.index', 'admin.job-requests.index'], true) => [],
+            in_array($route, ['admin.index', 'admin.job-requests.index', 'admin.job-requests.create', 'admin.job-requests.store'], true) => [],
             default => [$jobRequest],
         });
     }

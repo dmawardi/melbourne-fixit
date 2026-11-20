@@ -16,6 +16,8 @@ Route::middleware(['auth', 'verified', 'can:admin'])
         Route::get('/', DashboardController::class)->name('index');
 
         Route::get('requests', [JobRequestController::class, 'index'])->name('job-requests.index');
+        Route::get('requests/create', [JobRequestController::class, 'create'])->name('job-requests.create');
+        Route::post('requests', [JobRequestController::class, 'store'])->name('job-requests.store');
         Route::get('requests/{jobRequest}', [JobRequestController::class, 'show'])->name('job-requests.show');
         Route::patch('requests/{jobRequest}', [JobRequestController::class, 'update'])->name('job-requests.update');
         Route::delete('requests/{jobRequest}', [JobRequestController::class, 'destroy'])->name('job-requests.destroy');
